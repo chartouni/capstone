@@ -35,7 +35,7 @@ def load_scopus_data(file_path: Union[str, Path]) -> pd.DataFrame:
 
     # Determine file format and load
     if file_path.suffix.lower() == '.csv':
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, low_memory=False)
     elif file_path.suffix.lower() in ['.xlsx', '.xls']:
         df = pd.read_excel(file_path)
     else:
@@ -73,7 +73,7 @@ def load_scival_data(file_path: Union[str, Path]) -> pd.DataFrame:
 
     # Determine file format and load
     if file_path.suffix.lower() == '.csv':
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, low_memory=False)
     elif file_path.suffix.lower() in ['.xlsx', '.xls']:
         df = pd.read_excel(file_path)
     else:
@@ -120,7 +120,7 @@ def load_processed_data(
 
     # Load based on format
     if file_format == 'csv':
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, low_memory=False)
     elif file_format == 'parquet':
         df = pd.read_parquet(file_path)
     elif file_format in ['pkl', 'pickle']:
