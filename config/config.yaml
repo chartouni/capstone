@@ -1,0 +1,128 @@
+# Citation Predictor Configuration
+
+# Data paths
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  features_dir: "data/features"
+  interim_dir: "data/interim"
+
+  # Input files (to be updated with actual filenames)
+  scopus_file: "data/raw/scopus_data.csv"
+  scival_file: "data/raw/scival_data.csv"
+
+  # Output files
+  merged_file: "data/processed/merged_data.csv"
+  final_features: "data/features/features.pkl"
+
+# Feature Engineering
+features:
+  # Text features
+  text:
+    max_features: 5000
+    ngram_range: [1, 2]
+    min_df: 5
+    max_df: 0.8
+
+  # Author features
+  author:
+    aggregations: ["max", "mean", "sum", "min"]
+    features: ["h_index", "citation_count"]
+
+  # Venue features
+  venue:
+    use_historical_stats: true
+    top_venues_count: 50
+
+# Model Configuration
+models:
+  # Random seed for reproducibility
+  random_state: 42
+
+  # Classification
+  classification:
+    threshold: 0.75  # Top 25% threshold
+    cv_folds: 5
+    stratified: true
+
+    algorithms:
+      - logistic_regression
+      - random_forest
+      - xgboost
+      - lightgbm
+
+  # Regression
+  regression:
+    target_transform: "log"  # log-transform citation counts
+    cv_folds: 5
+
+    algorithms:
+      - linear_regression
+      - random_forest
+      - xgboost
+      - lightgbm
+
+# Hyperparameter tuning
+hyperparameters:
+  random_forest:
+    n_estimators: [100, 200, 300]
+    max_depth: [10, 20, 30, null]
+    min_samples_split: [2, 5, 10]
+    min_samples_leaf: [1, 2, 4]
+
+  xgboost:
+    n_estimators: [100, 200, 300]
+    max_depth: [3, 5, 7]
+    learning_rate: [0.01, 0.05, 0.1]
+    subsample: [0.8, 0.9, 1.0]
+    colsample_bytree: [0.8, 0.9, 1.0]
+
+  lightgbm:
+    n_estimators: [100, 200, 300]
+    max_depth: [3, 5, 7, -1]
+    learning_rate: [0.01, 0.05, 0.1]
+    num_leaves: [31, 50, 70]
+    subsample: [0.8, 0.9, 1.0]
+    colsample_bytree: [0.8, 0.9, 1.0]
+
+# Evaluation Metrics
+metrics:
+  classification:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+    - roc_auc
+
+  regression:
+    - mse
+    - rmse
+    - mae
+    - r2
+    - spearman_correlation
+
+# Temporal Validation
+temporal_validation:
+  enabled: true
+  train_years: [2015, 2016, 2017]
+  test_years: [2018, 2019, 2020]
+
+# Visualization
+visualization:
+  figure_format: "png"
+  dpi: 300
+  style: "seaborn-v0_8"
+  top_features_count: 20
+
+# Model Saving
+model_save:
+  directory: "models"
+  format: "pkl"
+  save_best_only: true
+
+# Deployment
+deployment:
+  app_name: "Citation Predictor"
+  host: "0.0.0.0"
+  port: 8501
+  theme: "light"
