@@ -87,3 +87,5 @@ Tools: matplotlib, seaborn, plotly (optional for interactive visualizations)
 
 I will be working on Jupyter notebooks. Two files were sent to me. They are too large to be uploaded here.
 I must use the column containing the EID, which is same in both files, to match each article, and add the abstracts from the Scopus file to the corresponding entries in the SciVal file.
+
+The machine learning model(s) should be deployed on a tool such as Streamlit or any other tool that allows the library to get updated predictions along the way.
