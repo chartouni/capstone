@@ -76,9 +76,13 @@ Compare performance metrics across datasets
 ● Test temporal generalization: train on 2015-2017, test on 2018-2020
 ● Tools: pandas, matplotlib, seaborn for visualizations
 Phase 6: Visualization & Reporting
+Phase 6: Visualization & Reporting
 
 ROC curves for classification performance
 Confusion matrices and precision-recall curves
 Feature importance bar charts (top 20 features)
 Citation distribution histograms (actual vs predicted)
 Tools: matplotlib, seaborn, plotly (optional for interactive visualizations)
+
+I will be working on Jupyter notebooks. Two files were sent to me. They are too large to be uploaded here.
+I must use the column containing the EID, which is same in both files, to match each article, and add the abstracts from the Scopus file to the corresponding entries in the SciVal file.
