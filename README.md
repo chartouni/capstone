@@ -1,4 +1,5 @@
 Brief Summary of Capstone Project
+
 Citation counts serve as a critical metric for assessing research impact, influencing funding decisions, academic promotions, and institutional rankings. However, predicting which papers will become highly cited remains challenging due to the complex interplay of author reputation, venue prestige, content quality, and field-specific dynamics. This project addresses the problem of early prediction of citation impact using only information available at publication time—before any citations accumulate.
 
 For this capstone, I will be coordinating directly with AUB to access publication data and understand institutional research priorities. The university is interested in leveraging machine learning to identify emerging high-impact research, optimize resource allocation, and enhance its research visibility. This collaboration provides access to thousands of AUB publications with complete metadata, enabling domain-specific model development and validation.
