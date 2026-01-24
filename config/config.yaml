@@ -7,9 +7,9 @@ data:
   features_dir: "data/features"
   interim_dir: "data/interim"
 
-  # Input files (to be updated with actual filenames)
-  scopus_file: "data/raw/scopus_data.csv"
-  scival_file: "data/raw/scival_data.csv"
+  # Input files
+  scopus_file: "data/raw/scopus.csv"
+  scival_file: "data/raw/scival.csv"
 
   # Output files
   merged_file: "data/processed/merged_data.csv"
