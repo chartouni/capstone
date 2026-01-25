@@ -76,8 +76,9 @@ def main():
         st.markdown("---")
 
         st.markdown("### 📈 Quick Stats")
-        st.metric("Training Papers", "2,545")
-        st.metric("Test Papers", "3,573")
+        st.metric("Total Papers", "14,832")
+        st.metric("Train (2015-2017)", "2,545")
+        st.metric("Test (2018-2020)", "3,573")
         st.metric("Total Features", "5,021")
         st.metric("Best F1 Score", "68.2%")
         st.metric("Best R² Score", "48.2%")
