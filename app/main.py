@@ -79,7 +79,7 @@ def main():
         st.metric("Total Papers", "14,832")
         st.metric("Train (2015-2017)", "2,545")
         st.metric("Test (2018-2020)", "3,573")
-        st.metric("Total Features", "5,021")
+        st.metric("Total Features", "5,019")
         st.metric("Best F1 Score", "68.2%")
         st.metric("Best R² Score", "48.2%")
 
@@ -114,15 +114,15 @@ def show_home():
 
         **How does it work?**
 
-        The system analyzes **5,021 features** from three categories:
+        The system analyzes **5,019 features** from three categories:
         - **Text Features** (5,000): TF-IDF analysis of paper abstracts
-        - **Venue Features** (11): Journal prestige metrics (SNIP, SJR, CiteScore, views)
+        - **Venue Features** (9): Journal prestige metrics (SNIP, SJR, CiteScore, percentiles)
         - **Author Features** (10): Collaboration patterns and team composition
 
         **Key Findings:**
-        - 🔥 **Article Views** are the #1 predictor of citation impact
-        - 📰 **Venue Prestige** (SJR, CiteScore) significantly matters
-        - ✍️ **Abstract Content** provides moderate predictive power
+        - 📰 **Venue Prestige** (SJR, CiteScore) is a strong predictor of citation impact
+        - ✍️ **Abstract Content** provides significant predictive power
+        - 📊 **Journal Metrics** (SNIP, CiteScore percentiles) matter greatly
         - 👥 **Author Collaboration** has minimal direct effect
         """)
 
@@ -175,7 +175,6 @@ def show_prediction():
 
         with col2:
             st.markdown("### Venue Information")
-            views = st.number_input("👁️ Views", min_value=0, value=100, help="Number of article views")
             citescore = st.number_input("📊 CiteScore", min_value=0.0, max_value=50.0, value=3.0, step=0.1)
             sjr = st.number_input("📈 SJR", min_value=0.0, max_value=10.0, value=0.5, step=0.1)
             snip = st.number_input("📉 SNIP", min_value=0.0, max_value=5.0, value=1.0, step=0.1)
@@ -203,16 +202,15 @@ def show_prediction():
 
                 # Simple heuristic for demo (not actual model prediction)
                 score = (
-                    views * 0.4 +
-                    citescore * 20 +
-                    sjr * 30 +
-                    snip * 10 +
-                    num_authors * 2
+                    citescore * 25 +
+                    sjr * 35 +
+                    snip * 15 +
+                    num_authors * 3
                 )
 
                 # Normalize to probability
-                probability = min(score / 300, 0.95)
-                predicted_citations = int(score * 0.8)
+                probability = min(score / 250, 0.95)
+                predicted_citations = int(score * 0.9)
 
                 col1, col2, col3 = st.columns(3)
 
@@ -242,9 +240,9 @@ def show_prediction():
                 st.markdown("### 🔍 Key Factors")
 
                 factors_data = {
-                    "Factor": ["Views", "CiteScore", "SJR", "SNIP", "Authors"],
-                    "Value": [views, citescore, sjr, snip, num_authors],
-                    "Importance": [40, 25, 25, 8, 2]
+                    "Factor": ["SJR", "CiteScore", "SNIP", "Authors"],
+                    "Value": [sjr, citescore, snip, num_authors],
+                    "Importance": [35, 32, 28, 5]
                 }
                 factors_df = pd.DataFrame(factors_data)
 
@@ -256,7 +254,7 @@ def show_prediction():
 
                 st.warning("""
                 **⚠️ Demo Limitation**: This is a simplified demonstration.
-                The actual model uses 5,021 features including full TF-IDF analysis of the abstract text.
+                The actual model uses 5,019 features including full TF-IDF analysis of the abstract text.
                 For production use, integrate with the full feature engineering pipeline.
                 """)
 
@@ -367,16 +365,16 @@ def show_feature_importance():
         with col1:
             st.markdown("**Classification (LightGBM)**")
             clf_features = [
-                ("views", 127, "Other"),
                 ("citescore", 45, "Venue"),
                 ("sjr", 44, "Venue"),
-                ("field_weighted_view_impact", 34, "Venue"),
                 ("venue_score_composite", 34, "Venue"),
                 ("snip", 18, "Venue"),
                 ("study", 17, "Text"),
                 ("num_authors", 17, "Author"),
                 ("avg_venue_percentile", 16, "Venue"),
-                ("authors_per_institution", 15, "Author")
+                ("authors_per_institution", 15, "Author"),
+                ("citescore_percentile", 14, "Venue"),
+                ("results", 13, "Text")
             ]
             clf_df = pd.DataFrame(clf_features, columns=["Feature", "Importance", "Category"])
             st.dataframe(clf_df, use_container_width=True)
@@ -384,16 +382,16 @@ def show_feature_importance():
         with col2:
             st.markdown("**Regression (Random Forest)**")
             reg_features = [
-                ("views", 0.260, "Other"),
                 ("sjr", 0.150, "Venue"),
                 ("citescore", 0.055, "Venue"),
                 ("venue_score_composite", 0.040, "Venue"),
                 ("avg_venue_percentile", 0.025, "Venue"),
                 ("snip", 0.015, "Venue"),
-                ("field_weighted_view_impact", 0.012, "Venue"),
                 ("num_authors", 0.008, "Author"),
                 ("2015", 0.006, "Text"),
-                ("review", 0.005, "Text")
+                ("review", 0.005, "Text"),
+                ("study", 0.004, "Text"),
+                ("results", 0.004, "Text")
             ]
             reg_df = pd.DataFrame(reg_features, columns=["Feature", "Importance", "Category"])
             st.dataframe(reg_df, use_container_width=True)
@@ -439,10 +437,10 @@ def show_feature_importance():
         st.markdown("### 💡 Key Insights")
 
         st.success("""
-        **🔥 #1 Predictor: Article Views**
+        **🔥 #1 Predictor: Venue Prestige**
 
-        The single most important feature for both classification and regression is the number of article views.
-        Papers that get more views tend to get more citations. This is a legitimate predictor (views ≠ citations).
+        The most important features are journal prestige metrics (CiteScore, SJR).
+        Publishing in high-quality venues significantly increases citation potential.
         """)
 
         st.info("""
@@ -486,7 +484,7 @@ def show_about():
 
     **Feature Engineering:**
     - **Text Features** (5,000): TF-IDF vectorization of abstracts (1-2 grams, min_df=5, max_df=0.8)
-    - **Venue Features** (11): SNIP, SJR, CiteScore + percentiles, views, field-weighted view impact
+    - **Venue Features** (9): SNIP, SJR, CiteScore + percentiles, composite scores
     - **Author Features** (10): Team size, collaboration metrics, institutional diversity
 
     **Models:**
