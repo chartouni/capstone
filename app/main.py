@@ -35,21 +35,24 @@ def main():
 
     # Sidebar
     with st.sidebar:
-        st.header("Navigation")
+        st.header("📋 Quick Navigation")
         st.markdown("""
-        Use the options below to:
-        - Make predictions for new publications
-        - Upload batch data for multiple predictions
-        - Explore model performance
-        - View feature importance
+        Navigate using the sidebar menu to:
+        - 🎯 **Single Prediction** - Predict for one paper
+        - 📁 **Batch Prediction** - Predict for multiple papers
+        - 📈 **Model Performance** - View model metrics
+
+        👈 Use the menu on the left to get started!
         """)
 
         st.markdown("---")
-        st.markdown("### About")
+        st.markdown("### ℹ️ About")
         st.info("""
         This tool was developed as part of a capstone project in collaboration
         with the American University of Beirut (AUB) to predict citation impact
         of research publications.
+
+        Built with scikit-learn, XGBoost, LightGBM, and Streamlit.
         """)
 
     # Main content area
@@ -64,8 +67,7 @@ def main():
         - Venue details
         - Publication year
         """)
-        if st.button("Start Single Prediction", use_container_width=True):
-            st.info("Single prediction feature coming soon!")
+        st.info("👈 Navigate to **Single Prediction** page using the sidebar menu to get started!")
 
     with col2:
         st.subheader("📁 Batch Prediction")
@@ -75,8 +77,7 @@ def main():
 
         Download the results as a CSV file.
         """)
-        if st.button("Start Batch Prediction", use_container_width=True):
-            st.info("Batch prediction feature coming soon!")
+        st.info("👈 Navigate to **Batch Prediction** page using the sidebar menu to upload your CSV!")
 
     # Additional sections
     st.markdown("---")
@@ -91,14 +92,17 @@ def main():
         - Regression predictions vs. actual
         - Temporal validation results
         """)
+        st.info("👈 Navigate to **Model Performance** page to view metrics!")
 
     with col4:
-        st.subheader("🔍 Feature Importance")
+        st.subheader("🛠️ Setup Requirements")
         st.markdown("""
-        Understand what drives citation impact:
-        - Feature importance rankings
-        - SHAP value analysis
-        - Domain-specific insights
+        To use predictions, you need:
+        - ✅ Trained models in `models/`
+        - ✅ TF-IDF vectorizer in `data/features/`
+        - ✅ Feature statistics
+
+        See the prediction pages for detailed setup instructions.
         """)
 
     # Footer
