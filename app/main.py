@@ -345,6 +345,7 @@ def show_performance():
         - Linear regression completely failed (negative R²)
         - Tree-based models perform best
         """)
+        st.info("👈 Navigate to **Model Performance** page to view metrics!")
 
 def show_feature_importance():
     """Display feature importance page."""
