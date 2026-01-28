@@ -81,22 +81,12 @@ jupyter notebook notebooks/31_regression_models.ipynb
 
 ## Running the App
 
-### Locally:
 ```bash
 # From project root
 streamlit run app/main.py
 
 # Or with specific configuration
 streamlit run app/main.py --server.port 8501
-```
-
-### With Docker:
-```bash
-# Build image
-docker build -t citation-predictor .
-
-# Run container
-docker run -p 8501:8501 citation-predictor
 ```
 
 ## Configuration
@@ -130,23 +120,16 @@ Predictions include:
 
 ### Production deployment options:
 
-1. **Streamlit Cloud**:
+1. **Streamlit Cloud** (Recommended):
    - Push your code to GitHub
    - Connect your repository to [Streamlit Cloud](https://streamlit.io/cloud)
    - Note: Model files need to be available (consider using Git LFS or external storage)
 
-2. **Docker**:
-   ```bash
-   # Create Dockerfile (see project root)
-   docker build -t citation-predictor .
-   docker run -p 8501:8501 citation-predictor
-   ```
-
-3. **Cloud Platforms (AWS/Azure/GCP)**:
-   - Deploy as a containerized app
+2. **Cloud Platforms (AWS/Azure/GCP)**:
+   - Deploy using Streamlit on cloud VMs or container services
    - Use cloud storage for models (S3, Azure Blob, GCS)
 
-4. **On-premise (AUB Servers)**:
+3. **On-premise (AUB Servers)**:
    - Copy project to server
    - Install dependencies: `pip install -r requirements.txt`
    - Run with `streamlit run app/main.py --server.port 8501`
