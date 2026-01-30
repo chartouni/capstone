@@ -113,9 +113,7 @@ capstone/
 │   ├── main.py                       # Main Streamlit app
 │   ├── pages/                        # Multi-page app structure
 │   │   ├── 01_predict.py            # Single prediction page
-│   │   ├── 02_batch_predict.py      # Batch prediction page
-│   │   ├── 03_model_info.py         # Model performance page
-│   │   └── 04_feature_importance.py # Feature importance page
+│   │   └── 03_model_info.py         # Model performance page
 │   ├── components/                   # Reusable UI components
 │   └── styles/                       # Custom CSS styling
 │
@@ -197,10 +195,9 @@ capstone/
 
 **Streamlit Application** (`app/`):
 - Interactive web interface
-- Single and batch prediction
+- Single prediction interface
 - Model performance dashboard
-- Feature importance visualization
-- Real-time updates capability
+- Real-time prediction capability
 
 ## Workflow
 
