@@ -5,45 +5,30 @@ This directory contains the Streamlit web application for the citation predictio
 ## Purpose
 
 Deploy trained models as an interactive web application that allows AUB to:
-- Upload new publication data
+- Input new publication data
 - Get citation predictions in real-time
-- Visualize prediction confidence and feature contributions
-- Compare multiple publications
-- Track predictions over time
+- Visualize prediction confidence and model performance
 
 ## Files
 
 - `main.py`: Main Streamlit application entry point (landing page)
 - `pages/`: Multi-page app structure
   - `01_🎯_Single_Prediction.py`: Single prediction interface
-  - `02_📁_Batch_Prediction.py`: Batch prediction with CSV upload
   - `03_📈_Model_Performance.py`: Model metrics and evaluation
 
 ## Features
 
 ### 1. Single Publication Prediction
-- Input publication metadata manually or via form
+- Input publication metadata manually via form
 - Get instant citation prediction (classification + regression)
-- View confidence scores and prediction intervals
-- See feature contributions to prediction
+- View confidence scores and prediction results
+- See whether the paper is predicted to be high-impact (top 25%)
 
-### 2. Batch Prediction
-- Upload CSV file with multiple publications
-- Process batch predictions
-- Download results with predictions
-- View summary statistics
-
-### 3. Model Information
+### 2. Model Performance
 - Display model performance metrics
-- Show training/validation curves
-- Compare different models
-- View temporal validation results
-
-### 4. Feature Importance
-- Interactive feature importance plots
-- Filter by feature categories
-- Compare importance across models
-- SHAP value visualizations
+- View evaluation results from training
+- Compare classification and regression models
+- Understand model accuracy and limitations
 
 ## Prerequisites
 
