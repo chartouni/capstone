@@ -16,8 +16,8 @@ CitaPred predicts citation impact of academic papers using publication-time feat
 (200 words maximum - use bullets)
 
 **Data Processing & Feature Engineering:**
-- Merged Scopus (15,748 papers) and SciVal (15,493 papers) datasets using EID matching, yielding 14,832 clean publications
-- Engineered 5,019 features: TF-IDF text features (5,000), venue prestige metrics (9), and author reputation features (10)
+- Merged Scopus and SciVal datasets using EID matching for clean publication records
+- Engineered multi-modal features: TF-IDF text features from abstracts, venue prestige metrics (SNIP, SJR, CiteScore with percentiles), and author collaboration features (team size, institutions, international collaboration)
 - Implemented temporal train/test split (2015-2017 training, 2018-2020 testing) to prevent data leakage
 
 **Model Development:**
@@ -63,12 +63,12 @@ Removed batch prediction feature and Docker deployment to simplify capstone scop
 (100 words maximum)
 
 **Next Two Weeks:**
-- **Verify and address H-index temporal validity**: Confirm author H-indices reflect publication-time values, not current values (potential data leakage)
-- **Complete model training**: Execute classification and regression notebooks, save trained models to models/ directory
-- **Performance evaluation**: Generate ROC curves, confusion matrices, feature importance visualizations
-- **Error analysis**: Identify systematic prediction errors and model limitations
-- **Finalize Streamlit app**: Connect trained models to deployment interface, test end-to-end prediction workflow
-- **Documentation**: Prepare final report sections on methodology, results, and business impact for AUB
+- **Complete model training**: Execute classification and regression model notebooks (30_classification_models.ipynb, 31_regression_models.ipynb)
+- **Save trained models**: Export trained models to models/ directory in .pkl format for deployment
+- **Performance evaluation**: Generate ROC curves, confusion matrices, feature importance visualizations using notebooks 40 and 41
+- **Error analysis**: Identify systematic prediction errors, analyze which paper types are misclassified
+- **Finalize Streamlit app**: Connect trained models to deployment interface, test end-to-end prediction workflow with real AUB papers
+- **Documentation**: Prepare final report sections on methodology, results, feature importance insights, and business recommendations for AUB
 
 ---
 
@@ -78,7 +78,7 @@ Removed batch prediction feature and Docker deployment to simplify capstone scop
 
 **Deliverables Ready:**
 - Data pipeline (loading, merging, cleaning) ✓
-- Feature engineering system (5,019 features) ✓
+- Feature engineering system ✓
 - Streamlit deployment application framework ✓
 
 **In Progress:**
@@ -86,7 +86,7 @@ Removed batch prediction feature and Docker deployment to simplify capstone scop
 - Feature importance analysis
 - Final performance metrics
 
-**Dataset:** 14,832 AUB publications (2015-2020) with 5,019 engineered features
+**Dataset:** [RUN generate_report_outputs.py TO GET ACTUAL NUMBERS]
 
 ---
 
