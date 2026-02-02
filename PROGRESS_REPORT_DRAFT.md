@@ -24,6 +24,8 @@ CitaPred predicts citation impact of academic papers using publication-time feat
 - Trained classification models (Logistic Regression, Random Forest, XGBoost, LightGBM) achieving 79.01% ROC-AUC and 60.22% F1-score with Logistic Regression on test set
 - Developed regression models achieving R²=34.74% (Random Forest) and Spearman correlation=58.10% (LightGBM) for citation count prediction
 - Implemented 5-fold cross-validation showing consistent performance across models
+- Completed feature importance analysis: Text features (50.5%) and venue prestige (43.7%) drive predictions, while author collaboration contributes 5.9%
+- Conducted error analysis identifying model strengths (best for 11-25 citation papers) and limitations (struggles with highly-cited outliers >100 citations)
 
 **Deployment Infrastructure:**
 - Built complete Streamlit web application with multi-page interface (Home, Single Prediction, Model Performance, Feature Importance)
@@ -63,11 +65,11 @@ Removed batch prediction feature and Docker deployment to simplify capstone scop
 (100 words maximum)
 
 **Next Two Weeks:**
-- **Feature importance analysis**: Execute notebook 40 to identify which features (text, venue, author) drive citation impact predictions
-- **Error analysis**: Run notebook 41 to identify systematic prediction errors and understand which paper types are misclassified or underestimated
-- **Model deployment**: Save trained models to models/ directory, integrate with Streamlit app, and test end-to-end prediction workflow with real AUB papers
-- **Visualization generation**: Create ROC curves, confusion matrices, feature importance plots, and prediction distribution charts for final report
-- **Final documentation**: Complete capstone report with methodology, results interpretation, business recommendations for AUB research strategy, and deployment guide
+- **Model deployment verification**: Ensure trained models are properly saved and integrated with Streamlit app for end-to-end predictions
+- **Save visualization artifacts**: Export ROC curves, confusion matrices, and feature importance plots generated in notebooks 40-41 for final report
+- **Ex ante feature validation**: Verify venue metrics are temporal (not current snapshots) to confirm no data leakage
+- **Final capstone report**: Write comprehensive report including introduction, methodology, results analysis (model performance, feature importance, error patterns), business recommendations for AUB research strategy, and deployment guide
+- **Presentation preparation**: Create defense slides summarizing problem, approach, results, and business impact
 
 ---
 
@@ -79,6 +81,8 @@ Removed batch prediction feature and Docker deployment to simplify capstone scop
 - Data pipeline (loading, merging, cleaning) ✓
 - Feature engineering system (5,019 features) ✓
 - Model training (4 classification + 3 regression models) ✓
+- Feature importance analysis ✓
+- Error analysis and model diagnostics ✓
 - Streamlit deployment application framework ✓
 
 **Model Performance Achieved:**
@@ -93,9 +97,16 @@ Removed batch prediction feature and Docker deployment to simplify capstone scop
 - Median citations: 10 | Mean citations: 35.62
 
 **Next Phase:**
-- Feature importance and error analysis
-- Model deployment integration with Streamlit
-- Final capstone report and business recommendations
+- Deployment verification and testing
+- Ex ante feature validation (venue metrics)
+- Final capstone report writing
+- Presentation/defense preparation
+
+**Key Insights from Analysis:**
+- Venue prestige (SJR: 20.7%) and abstract content (50.5%) are strongest predictors
+- Model performs best on papers with 11-25 citations (MAE=0.41)
+- Main limitation: Struggles with highly-cited outliers (>100 citations)
+- Classification captures 69.6% of papers correctly; misses 305 high-impact papers (false negatives)
 
 ---
 
