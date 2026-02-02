@@ -26,6 +26,7 @@ CitaPred predicts citation impact of academic papers using publication-time feat
 - Implemented 5-fold cross-validation showing consistent performance across models
 - Completed feature importance analysis: Text features (50.5%) and venue prestige (43.7%) drive predictions, while author collaboration contributes 5.9%
 - Conducted error analysis identifying model strengths (best for 11-25 citation papers) and limitations (struggles with highly-cited outliers >100 citations)
+- Validated all 5,019 features as ex ante (observable at publication time): temporal venue metrics confirmed, no data leakage detected
 
 **Deployment Infrastructure:**
 - Built complete Streamlit web application with multi-page interface (Home, Single Prediction, Model Performance, Feature Importance)
@@ -65,11 +66,11 @@ Removed batch prediction feature and Docker deployment to simplify capstone scop
 (100 words maximum)
 
 **Next Two Weeks:**
-- **Model deployment verification**: Ensure trained models are properly saved and integrated with Streamlit app for end-to-end predictions
-- **Save visualization artifacts**: Export ROC curves, confusion matrices, and feature importance plots generated in notebooks 40-41 for final report
-- **Ex ante feature validation**: Verify venue metrics are temporal (not current snapshots) to confirm no data leakage
-- **Final capstone report**: Write comprehensive report including introduction, methodology, results analysis (model performance, feature importance, error patterns), business recommendations for AUB research strategy, and deployment guide
-- **Presentation preparation**: Create defense slides summarizing problem, approach, results, and business impact
+- **Generate visualization artifacts**: Re-run notebooks 10, 40, 41 to export figures (citation distribution, feature importance, error analysis) to reports/figures/ directory for final report
+- **Model deployment testing**: Test Streamlit app end-to-end with real AUB papers, verify predictions are working correctly
+- **Final capstone report**: Write comprehensive report (15-20 pages) including introduction, literature review, methodology, results analysis (model performance, feature importance, error patterns), discussion of limitations, business recommendations for AUB research strategy, and deployment guide
+- **Presentation preparation**: Create defense slides (12-15 slides) summarizing problem statement, approach, results, key findings, business impact, and future work
+- **Report polish**: Proofread final report, ensure all figures are properly referenced, add citations, format references
 
 ---
 
@@ -80,9 +81,11 @@ Removed batch prediction feature and Docker deployment to simplify capstone scop
 **Deliverables Completed:**
 - Data pipeline (loading, merging, cleaning) ✓
 - Feature engineering system (5,019 features) ✓
+- Ex ante feature validation (zero data leakage confirmed) ✓
 - Model training (4 classification + 3 regression models) ✓
 - Feature importance analysis ✓
 - Error analysis and model diagnostics ✓
+- Visualization export code added to notebooks ✓
 - Streamlit deployment application framework ✓
 
 **Model Performance Achieved:**
@@ -97,16 +100,18 @@ Removed batch prediction feature and Docker deployment to simplify capstone scop
 - Median citations: 10 | Mean citations: 35.62
 
 **Next Phase:**
-- Deployment verification and testing
-- Ex ante feature validation (venue metrics)
-- Final capstone report writing
-- Presentation/defense preparation
+- Generate and save visualization artifacts (8 figures for report)
+- Test Streamlit deployment end-to-end
+- Write final capstone report (15-20 pages)
+- Create presentation slides (12-15 slides)
+- Prepare for defense
 
 **Key Insights from Analysis:**
 - Venue prestige (SJR: 20.7%) and abstract content (50.5%) are strongest predictors
 - Model performs best on papers with 11-25 citations (MAE=0.41)
 - Main limitation: Struggles with highly-cited outliers (>100 citations)
 - Classification captures 69.6% of papers correctly; misses 305 high-impact papers (false negatives)
+- All 5,019 features validated as ex ante: venue metrics are temporal, no H-index or post-publication data used
 
 ---
 
