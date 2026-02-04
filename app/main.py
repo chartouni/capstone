@@ -550,7 +550,7 @@ def show_about():
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center'>
-        <p>CitaPred v1.0 | Built with ❤️ using Streamlit | © 2025 AUB</p>
+        <p>CitaPred v1.0 | Built using Streamlit | © 2025 AUB</p>
     </div>
     """, unsafe_allow_html=True)
 
