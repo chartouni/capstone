@@ -54,15 +54,15 @@ Handling missing abstracts and author metrics required robust preprocessing. TF-
 **Extreme Outlier Challenge:**
 Test set contains papers with up to 26,135 citations—4x higher than training set maximum (6,165 citations). This explains higher prediction errors for highly-cited outliers, as the model was not exposed to such extreme values during training. Temporal validation creates this natural challenge where breakthrough papers in later years exceed historical patterns.
 
-**Model Selection and Scope:**
-While deep learning was mentioned as a possibility in the proposal, gradient boosting methods (LightGBM, XGBoost) proved sufficient, achieving 79% ROC-AUC without the complexity and computational overhead of neural networks. This pragmatic choice allowed focus on feature engineering and ex ante validation rather than model architecture tuning.
+**Deployment Simplification:**
+Initial scope included Docker containerization and batch prediction features. Reduced complexity to focus on core prediction functionality, prioritizing single-paper predictions through Streamlit interface for clearer demonstration value.
 
 ---
 
 ## Significant Changes to Proposal (if any)
 (50 words maximum)
 
-Pivoted from H-index to collaboration features due to temporal data unavailability; used Scopus-provided venue metrics instead of manual curation (more scalable). Focused on gradient boosting methods (LightGBM, XGBoost) over deep learning, as traditional methods achieved strong performance (79% ROC-AUC). Eliminated post-publication metrics (views, citation-derived features) after identifying data leakage concerns, ensuring ex ante compliance.
+Pivoted from H-index to collaboration features due to temporal data unavailability; used Scopus-provided venue metrics instead of manual curation (more scalable). Focused on gradient boosting over deep learning, as traditional methods achieved strong performance (79% ROC-AUC). Removed batch prediction and Docker deployment to simplify scope. Eliminated post-publication metrics after identifying data leakage concerns.
 
 ---
 

@@ -116,7 +116,36 @@ class CitationPredictor:
             raise ValueError("No features could be extracted")
 
         X = pd.concat(features_list, axis=1)
+
+        # Validate feature alignment with training (if expected features available)
+        self._validate_features(X)
+
         return X
+
+    def _validate_features(self, X: pd.DataFrame) -> None:
+        """
+        Validate that prepared features match training expectations.
+        Logs warnings if feature count/names differ; does not block prediction.
+        """
+        expected_names = self.model_loader.get_expected_feature_names()
+        if expected_names is None:
+            return
+        actual = set(X.columns)
+        expected = set(expected_names)
+        if len(actual) != len(expected):
+            import warnings
+            warnings.warn(
+                f"Feature count mismatch: got {len(actual)}, expected {len(expected)}. "
+                "Predictions may be incorrect."
+            )
+        missing = expected - actual
+        extra = actual - expected
+        if missing or extra:
+            import warnings
+            if missing:
+                warnings.warn(f"Missing features ({len(missing)}): {list(missing)[:5]}...")
+            if extra:
+                warnings.warn(f"Extra features ({len(extra)}): {list(extra)[:5]}...")
 
     def predict_classification(
         self,
