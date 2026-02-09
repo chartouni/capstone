@@ -12,7 +12,11 @@ from typing import Dict, Optional
 def extract_venue_features(
     venues: pd.Series,
     venue_stats: Optional[Dict] = None,
-    training_mode: bool = False
+    training_mode: bool = False,
+    df: Optional[pd.DataFrame] = None,
+    venue_col: str = 'Scopus Source title',
+    citation_col: str = 'Citations',
+    top_n: int = 50
 ) -> pd.DataFrame:
     """
     Extract venue-related features.
@@ -21,6 +25,11 @@ def extract_venue_features(
         venues: Series of venue names (journal/conference titles)
         venue_stats: Dictionary of pre-computed venue statistics (for inference)
         training_mode: If True, compute statistics from data; if False, use provided stats
+        df: Optional full DataFrame for training_mode - if provided with citation_col,
+            computes real venue statistics instead of placeholders
+        venue_col: Name of venue column in df (when df provided)
+        citation_col: Name of citation column in df (when df provided)
+        top_n: Number of top venues for prestige scoring (when computing stats)
 
     Returns:
         DataFrame with venue features
@@ -28,20 +37,33 @@ def extract_venue_features(
     features = pd.DataFrame(index=venues.index)
 
     if not training_mode and venue_stats is None:
-        # This should be called during training with the full dataset
         raise ValueError("venue_stats required when training_mode is False")
 
     if training_mode:
-        # Compute venue statistics from the training data
-        # This would typically be done in the training pipeline
-        venue_counts = venues.value_counts()
-        features['venue_paper_count'] = venues.map(venue_counts).fillna(0)
-
-        # Placeholder for average citations per venue
-        # In real training, this would use actual citation data
-        features['venue_avg_citations'] = 0
-        features['venue_prestige_score'] = 0
-        features['is_top_venue'] = 0
+        # Compute real venue statistics when df with citations is provided
+        if df is not None and venue_col in df.columns and citation_col in df.columns:
+            venue_stats = compute_venue_statistics(
+                df, venue_col=venue_col, citation_col=citation_col, top_n=top_n
+            )
+            features['venue_paper_count'] = venues.map(
+                venue_stats.get('paper_counts', {})
+            ).fillna(0)
+            features['venue_avg_citations'] = venues.map(
+                venue_stats.get('avg_citations', {})
+            ).fillna(venue_stats.get('global_avg_citations', 0))
+            features['venue_prestige_score'] = venues.map(
+                venue_stats.get('prestige_scores', {})
+            ).fillna(0)
+            features['is_top_venue'] = venues.map(
+                venue_stats.get('is_top_venue', {})
+            ).fillna(0).astype(int)
+        else:
+            # Fallback when no citation data available
+            venue_counts = venues.value_counts()
+            features['venue_paper_count'] = venues.map(venue_counts).fillna(0)
+            features['venue_avg_citations'] = 0
+            features['venue_prestige_score'] = 0
+            features['is_top_venue'] = 0
     else:
         # Use pre-computed statistics for inference
         if venue_stats is None:
