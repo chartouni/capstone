@@ -103,37 +103,42 @@ All 5,019 features are **observable at publication time**:
 
 ## Feature Importance Rankings
 
-### Classification (LightGBM):
+### Classification (Logistic Regression):
 **Top 10 Features by Importance:**
-1. avg_venue_percentile (35.0)
-2. venue_score_composite (35.0)
-3. sjr (33.0)
-4. citescore (30.0)
-5. snip (26.0)
-6. num_authors (24.0)
-7. authors_per_institution (21.0)
-8. num_institutions (20.0)
-9. tfidf_methods (18.0)
-10. tfidf_review (17.0)
+1. **topic_prominence (92.0)** ← MOST IMPORTANT FEATURE
+2. venue_score_composite (40.0)
+3. avg_venue_percentile (29.0)
+4. snip (25.0)
+5. citescore (23.0)
+6. sjr (22.0)
+7. num_institutions (22.0)
+8. tfidf_2015 (21.0)
+9. tfidf_results (19.0)
+10. num_authors (19.0)
+
+**Key insight:** Topic Prominence Percentile is by far the most predictive feature, with importance >2x the next feature.
 
 ### Regression (Random Forest):
 **Top 10 Features by Importance:**
-1. sjr (0.2070)
-2. avg_venue_percentile (0.0623)
-3. citescore (0.0594)
-4. venue_score_composite (0.0561)
-5. snip (0.0252)
-6. num_institutions (0.0212)
-7. num_authors (0.0181)
-8. snip_percentile (0.0131)
-9. num_countries (0.0098)
-10. sjr_percentile (0.0088)
+1. sjr (0.1974)
+2. avg_venue_percentile (0.0579)
+3. **topic_prominence (0.0579)**
+4. citescore (0.0564)
+5. venue_score_composite (0.0520)
+6. snip (0.0256)
+7. num_institutions (0.0208)
+8. num_authors (0.0158)
+9. snip_percentile (0.0119)
+10. num_countries (0.0095)
 
 ### Aggregate Importance by Category:
-- **Text features (5,000):** 50.5% (regression), 72.9% (classification)
-- **Venue features (9):** 43.7% (regression), 18.9% (classification)
-- **Author features (10):** 5.9% (regression), 8.1% (classification)
-- **Additional metadata features (8):** [Run notebook 40 to update with latest importance scores]
+- **Text features (5,000):** 46.9% (regression), 67.0% (classification)
+- **Venue features (9):** 41.6% (regression), 16.5% (classification)
+- **Author features (10):** 5.5% (regression), 6.0% (classification)
+- **Additional metadata features (8):** 6.1% (regression), 10.4% (classification)
+
+**Impact of metadata features:** Despite being only 8 features (0.16% of total), they contribute 6-10% of predictive power. Topic prominence alone is the #1 classification feature.
+
 
 ---
 
@@ -175,7 +180,8 @@ For a **new paper at publication time:**
 1. Extract abstract → TF-IDF transform using saved vectorizer → 5,000 features
 2. Lookup journal metrics (SJR, CiteScore, SNIP) for publication year → 9 features
 3. Count authors, institutions, countries from byline → 10 features
-4. Concatenate → 5,019-dimensional feature vector
-5. Feed to trained model → Predict citation impact
+4. Extract metadata (Open Access, Publication Type, Topic Prominence, Source Type) → 8 features
+5. Concatenate → 5,027-dimensional feature vector
+6. Feed to trained model → Predict citation impact
 
 All information required is available at the moment of publication.
