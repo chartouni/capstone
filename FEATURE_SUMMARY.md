@@ -292,25 +292,86 @@ All text features are derived from abstracts written BEFORE publication.
 | Test set (2018-2020) | 3,573 papers |
 | Total features | 5,027 |
 | High-impact threshold | 26 citations (top 25%) |
+| High-impact papers in test set | 1,068 (29.9%) |
+| Low-impact papers in test set | 2,505 (70.1%) |
 
-### 7.2 Classification Performance
+### 7.2 Classification Performance - Summary
 
-| Model | ROC-AUC | F1 Score | Precision | Recall |
-|-------|---------|----------|-----------|--------|
-| Logistic Regression | **81.28%** | **62.07%** | 58.3% | 66.2% |
-| Random Forest | 78.5% | 59.1% | - | - |
-| XGBoost | 79.8% | 60.5% | - | - |
-| LightGBM | 80.1% | 61.2% | - | - |
+| Model | Accuracy | Precision | Recall | F1 Score | ROC-AUC |
+|-------|----------|-----------|--------|----------|---------|
+| **Logistic Regression** | **70.61%** | **50.53%** | **80.43%** | **62.23%** | **81.28%** |
+| Random Forest | 72.49% | 53.02% | 69.85% | 60.29% | 78.50% |
+| XGBoost | 66.00% | 46.11% | 81.55% | 58.87% | 79.80% |
+| LightGBM | 70.11% | 50.00% | 76.03% | 60.32% | 80.10% |
 
-### 7.3 Regression Performance
+**Best Overall Model:** Logistic Regression (highest ROC-AUC and F1 score)
 
-| Model | R² Score | Spearman Correlation | RMSE |
-|-------|----------|---------------------|------|
-| Random Forest | 34.74% | 56.2% | - |
-| XGBoost | 32.1% | 54.8% | - |
-| LightGBM | 35.2% | **58.10%** | - |
+### 7.3 Classification Performance - Detailed Confusion Matrices
 
-### 7.4 Performance by Category
+#### Logistic Regression (Best Model)
+```
+                 Predicted
+               Low    High
+Actual  Low   1664    841
+       High    209    859
+```
+- **True Negatives (TN):** 1,664 - Correctly identified low-impact papers
+- **False Positives (FP):** 841 - Low-impact papers incorrectly predicted as high-impact
+- **False Negatives (FN):** 209 - High-impact papers missed (19.6% miss rate)
+- **True Positives (TP):** 859 - Correctly identified high-impact papers (80.4% catch rate)
+
+#### Random Forest
+```
+                 Predicted
+               Low    High
+Actual  Low   1844    661
+       High    322    746
+```
+- Higher precision (53.02%) but lower recall (69.85%) - misses more high-impact papers
+
+#### XGBoost
+```
+                 Predicted
+               Low    High
+Actual  Low   1487   1018
+       High    197    871
+```
+- Highest recall (81.55%) but lowest precision (46.11%) - many false positives
+
+#### LightGBM
+```
+                 Predicted
+               Low    High
+Actual  Low   1693    812
+       High    256    812
+```
+- Balanced performance with 50% precision and 76% recall
+
+### 7.4 Regression Performance - Citation Count Prediction
+
+| Model | R² Score | Spearman Correlation | Best For |
+|-------|----------|---------------------|----------|
+| Linear Regression | -180.85% | 28.18% | ❌ Poor fit (negative R²) |
+| **Random Forest** | **37.42%** | 61.52% | General predictions |
+| XGBoost | 36.81% | 61.83% | Balanced performance |
+| **LightGBM** | **37.42%** | **61.94%** | ✅ Best ranking (Spearman) |
+
+**Key Insight:** Tree-based models (Random Forest, XGBoost, LightGBM) significantly outperform linear regression. LightGBM achieves the best ranking correlation (61.94% Spearman), meaning it's best at predicting the relative order of citation counts.
+
+### 7.5 Model Interpretation
+
+**Classification Trade-offs:**
+- **Logistic Regression** balances precision and recall well (F1=62.23%)
+- **XGBoost** catches the most high-impact papers (81.55% recall) but with more false alarms
+- **Random Forest** has highest accuracy (72.49%) but misses 30% of high-impact papers
+
+**Regression Patterns (from scatter plots):**
+- All models show strong correlation for low-to-medium citation papers (0-100 citations)
+- Models struggle with extreme outliers (>1000 citations) due to log transformation
+- Vertical bands at integer log values indicate discrete citation counts
+- LightGBM shows tightest clustering around the ideal prediction line
+
+### 7.6 Performance by Category
 
 **Impact of removing feature categories (Classification ROC-AUC):**
 
@@ -321,6 +382,8 @@ All text features are derived from abstracts written BEFORE publication.
 | Without venue | 76.5% | -4.78% |
 | Without author | 80.8% | -0.48% |
 | Text only | 75.3% | -5.98% |
+
+**Key Finding:** Removing venue features causes the largest performance drop (-4.78%), showing that journal prestige is critical for citation prediction despite being only 9 features.
 
 ---
 
