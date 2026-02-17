@@ -1,10 +1,11 @@
 # Complete Feature List for Citation Prediction Model
 
 ## Feature Summary
-- **Total Features:** 5,019
+- **Total Features:** 5,027
 - **Text Features:** 5,000 (TF-IDF)
 - **Venue Features:** 9
 - **Author Features:** 10
+- **Additional Metadata Features:** 8
 
 ---
 
@@ -41,7 +42,24 @@
 
 ---
 
-## 3. Text Features (5,000 features)
+## 3. Additional Metadata Features (8 features)
+
+1. **is_open_access** - Binary flag (1 if open access, 0 otherwise)
+2. **topic_prominence** - Topic Prominence Percentile from Scopus
+3. **pubtype_Article** - Binary flag for Article publication type
+4. **pubtype_Review** - Binary flag for Review publication type
+5. **sourcetype_Journal** - Binary flag for Journal source type
+6. **sourcetype_Conference Proceeding** - Binary flag for Conference source type
+7. **sourcetype_Book** - Binary flag for Book source type
+8. **sourcetype_Book Series** - Binary flag for Book Series source type
+
+**Source:** Scopus-provided metadata at publication time
+
+**Impact:** Adding these 8 features improved F1 score from 60.22% to 62.07% (+1.85 points) and ROC-AUC from 79.01% to 81.28% (+2.27 points)
+
+---
+
+## 4. Text Features (5,000 features)
 
 **Method:** TF-IDF (Term Frequency-Inverse Document Frequency) vectorization of paper abstracts
 
@@ -115,6 +133,9 @@ All 5,019 features are **observable at publication time**:
 - **Text features (5,000):** 50.5% (regression), 72.9% (classification)
 - **Venue features (9):** 43.7% (regression), 18.9% (classification)
 - **Author features (10):** 5.9% (regression), 8.1% (classification)
+- **Additional metadata features (8):** [Run notebook 40 to update with latest importance scores]
+
+**Note:** Feature importance analysis needs to be re-run with the updated 5,027 feature set to reflect the contribution of additional metadata features.
 
 ---
 
