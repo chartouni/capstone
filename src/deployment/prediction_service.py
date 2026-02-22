@@ -111,12 +111,65 @@ class CitationPredictor:
         author_features = extract_author_features(df, authors_col, h_index_col)
         features_list.append(author_features)
 
+        # Extract metadata features (8 features critical for model performance)
+        metadata_features = self._extract_metadata_features(df)
+        features_list.append(metadata_features)
+
         # Combine all features
         if len(features_list) == 0:
             raise ValueError("No features could be extracted")
 
         X = pd.concat(features_list, axis=1)
         return X
+
+    def _extract_metadata_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Extract 8 metadata features used in the final model.
+
+        Features:
+            - is_open_access: Open access status (binary)
+            - topic_prominence: Scopus topic prominence percentile (0-100)
+            - pubtype_Article: Publication type is Article (binary)
+            - pubtype_Review: Publication type is Review (binary)
+            - sourcetype_Journal: Source type is Journal (binary)
+            - sourcetype_Conference Proceeding: Source type is Conference (binary)
+            - sourcetype_Book: Source type is Book (binary)
+            - sourcetype_Book Series: Source type is Book Series (binary)
+
+        Args:
+            df: DataFrame with publication metadata
+
+        Returns:
+            DataFrame with 8 metadata features
+        """
+        idx = df.index
+        meta = pd.DataFrame(index=idx)
+
+        # Open access status
+        if 'is_open_access' in df.columns:
+            meta['is_open_access'] = df['is_open_access'].fillna(0).astype(int)
+        else:
+            meta['is_open_access'] = 0
+
+        # Topic prominence percentile (Scopus-provided, 0-100)
+        if 'topic_prominence' in df.columns:
+            meta['topic_prominence'] = df['topic_prominence'].fillna(df['topic_prominence'].median() if 'topic_prominence' in df.columns else 50.0)
+        else:
+            meta['topic_prominence'] = 50.0  # Default: median percentile
+
+        # Publication type (one-hot)
+        pub_type = df.get('Publication Type', pd.Series(['Article'] * len(df), index=idx))
+        meta['pubtype_Article'] = (pub_type == 'Article').astype(int)
+        meta['pubtype_Review'] = (pub_type == 'Review').astype(int)
+
+        # Source type (one-hot)
+        src_type = df.get('Source type', pd.Series(['Journal'] * len(df), index=idx))
+        meta['sourcetype_Journal'] = (src_type == 'Journal').astype(int)
+        meta['sourcetype_Conference Proceeding'] = (src_type == 'Conference Proceeding').astype(int)
+        meta['sourcetype_Book'] = (src_type == 'Book').astype(int)
+        meta['sourcetype_Book Series'] = (src_type == 'Book Series').astype(int)
+
+        return meta
 
     def predict_classification(
         self,
@@ -182,6 +235,10 @@ class CitationPredictor:
         authors: str,
         h_indices: str,
         year: int,
+        is_open_access: bool = False,
+        topic_prominence: float = 50.0,
+        publication_type: str = 'Article',
+        source_type: str = 'Journal',
         classification_model: str = 'lightgbm',
         regression_model: str = 'lightgbm'
     ) -> Dict:
@@ -195,6 +252,10 @@ class CitationPredictor:
             authors: Authors string
             h_indices: H-index values
             year: Publication year
+            is_open_access: Whether the paper is open access
+            topic_prominence: Scopus topic prominence percentile (0-100)
+            publication_type: Publication type ('Article' or 'Review')
+            source_type: Source type ('Journal', 'Conference Proceeding', 'Book', 'Book Series')
             classification_model: Model for classification
             regression_model: Model for regression
 
@@ -208,7 +269,11 @@ class CitationPredictor:
             'Scopus Source title': venue,
             'Authors': authors,
             'Authors H-index': h_indices,
-            'Year': year
+            'Year': year,
+            'is_open_access': int(is_open_access),
+            'topic_prominence': topic_prominence,
+            'Publication Type': publication_type,
+            'Source type': source_type
         }])
 
         # Make predictions
