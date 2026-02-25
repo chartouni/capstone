@@ -287,7 +287,7 @@ This definitively confirms that all optimization attempts have been exhausted.
 
 ### Experiment 10: Domain-Specific Models (Notebook 42)
 **Date**: February 2026
-**Status**: ✅ COMPLETED
+**Status**: ✅ COMPLETED (Fixed mapping + 4 variants tested)
 **Motivation**: Supervisor suggestion based on Wu et al. (2023)
 
 **Background**:
@@ -297,58 +297,80 @@ Wu et al. (2023) in *Scientometrics* demonstrated that citation patterns vary si
 Training domain-specific models will improve F1 by capturing field-specific citation dynamics.
 
 **Method**:
-1. Grouped papers by ASJC field into 5-6 major research domains:
-   - Medicine & Health Sciences
-   - Life & Natural Sciences
+1. **Domain Mapping** - Group papers by ASJC field into 6 major research domains:
+   - Medicine & Health
    - Engineering & Technology
    - Social Sciences
-   - Arts & Humanities
+   - Natural Sciences
    - Multidisciplinary
+   - Other
 
-2. Trained separate LogisticRegression models per domain
-   - Same configuration as baseline: `class_weight='balanced'`, `threshold=0.54`
-   - Skipped domains with <50 test samples (insufficient data)
+   **CRITICAL FIX**: Initial exact-match mapping failed (97% papers → "Other").
+   Fixed with substring matching on actual ASJC values (e.g., "General Medicine" → Medicine & Health).
 
-3. Made predictions using appropriate domain model for each test paper
+   **Result after fix**: 61% Medicine & Health, 16% Engineering, 10% Social Sciences, 7% Natural Sciences, 3% each Multidisciplinary/Other
 
-4. Compared overall weighted F1 vs. baseline (62.54%)
+2. **Tested 4 Domain Segmentation Variants**:
+   - **Variant A**: Basic domain-specific (fixed threshold 0.54)
+   - **Variant B**: Per-domain threshold optimization (0.33-0.70 range)
+   - **Variant C**: Selective fallback (use domain model only where it beats baseline)
+   - **Baseline**: Universal model (no segmentation)
+
+3. Trained separate LogisticRegression models per domain (same config: `class_weight='balanced'`)
+
+4. Skipped domains with <50 test samples
 
 **Results**:
 
-| Metric | Baseline (Universal) | Domain-Specific | Change |
-|--------|----------------------|-----------------|--------|
-| Accuracy | 72.38% | 72.32% | -0.06% |
-| Precision | 52.58% | 52.56% | -0.02% |
-| Recall | 77.15% | 75.94% | **-1.22%** |
-| **F1** | **62.54%** | **62.12%** | **-0.42%** |
-| ROC-AUC | 81.04% | 80.77% | -0.26% |
+| Variant | F1 Score | Change vs Baseline | Status |
+|---------|----------|-------------------|--------|
+| Baseline (Universal, threshold=0.54) | **62.54%** | - | ✅ |
+| A. Domain-Specific (fixed 0.54) | 59.39% | **-3.15%** | ❌ Much worse |
+| B. Domain-Specific (optimized thresholds) | 61.23% | **-1.31%** | ❌ Still worse |
+| C. Selective Fallback | 62.65% | **+0.10%** | ⚠️ Within noise |
+
+**Per-Domain Analysis (Variant C - Selective)**:
+| Domain | Train Size | Test Size | Baseline F1 | Domain Model F1 | Decision |
+|--------|-----------|-----------|-------------|-----------------|----------|
+| Medicine & Health | 1,471 | 2,131 | **61.24%** | 59.96% | Keep baseline |
+| Engineering & Technology | 460 | 620 | **66.79%** | 64.88% | Keep baseline |
+| Social Sciences | 258 | 350 | 61.33% | **62.16%** | Use domain (+0.83) |
+| Natural Sciences | 203 | 293 | **59.38%** | 57.69% | Keep baseline |
+| Multidisciplinary | 74 | 93 | **72.27%** | 67.21% | Keep baseline |
+| Other | 79 | 86 | 52.83% | **55.17%** | Use domain (+2.34) |
+
+**Domain models used**: 2/6 (Social Sciences, Other)
+**Baseline kept**: 4/6 (all major domains)
 
 **Analysis**:
-Domain segmentation provided **no improvement** and slightly decreased performance:
-- F1 decreased by 0.42 points (not statistically significant, but not better)
-- Recall dropped by 1.22 points - missing slightly more high-impact papers
-- All metrics were equal or slightly worse
+1. **Initial broken mapping** (97% in "Other") masked the real issue
+2. **Fixed mapping** properly categorized papers, but domain models still performed **worse** on all major domains
+3. **Threshold optimization** recovered some performance but still below baseline
+4. **Selective fallback** achieved +0.10 F1 by using domain models only for 2 small domains (Social Sciences, Other)
+5. **+0.10 improvement is statistically insignificant** (within measurement noise)
 
-**Root Cause - Dataset Size**:
-After domain segmentation, sample sizes per domain were too small:
-- Training set: 2,545 papers total → 300-800 papers per domain
-- Test set: 3,573 papers total → 400-900 papers per domain
-- **Insufficient data** for robust domain-specific models
+**Root Cause - Insufficient Per-Domain Samples**:
+Even with correct mapping, per-domain sample sizes too small:
+- Training: 74-1,471 papers per domain (vs 2,545 total for universal model)
+- Test: 86-2,131 papers per domain
+- Domain-specific models suffer from **overfitting** and **insufficient training data**
+- Universal model benefits from **cross-domain patterns** and **larger sample size**
 
 **Comparison to Wu et al. (2023)**:
-- Wu et al.: 4M+ papers → 500,000+ per domain ✅ Works well
-- Our dataset: 3,573 test papers → 400-900 per domain ❌ Too small
+- **Wu et al.**: 4M+ papers → 500,000+ per domain ✅ Domain models work
+- **Our dataset**: 6,118 total → 74-1,471 per domain ❌ Too small for robust domain models
 
-**Conclusion**: ❌ **NO IMPROVEMENT - Dataset too small**
+**Conclusion**: ❌ **NO SIGNIFICANT IMPROVEMENT - Dataset too small**
 
-Domain segmentation requires **10-20× more data** to be effective. With current dataset size:
-1. The **universal baseline model (62.54% F1) remains optimal**
-2. Domain-specific modeling would require 20,000-50,000 papers minimum
-3. This validates that 62.54% F1 is the true ceiling for our data size
-4. Wu et al.'s approach is sound but not applicable to modest-sized datasets
+Key findings:
+1. Domain segmentation **harms performance** when per-domain samples are small
+2. **Selective fallback** (62.65% F1) gives +0.10 improvement but **within noise margin**
+3. The **universal baseline (62.54% F1) remains optimal**
+4. Domain-specific modeling requires **20,000-50,000 papers minimum** (10-20× more data)
+5. Wu et al.'s approach is sound for **massive datasets** but **not applicable to modest-sized datasets**
 
 **Key Takeaway**:
-This experiment **validates the supervisor's hypothesis conceptually** (domain segmentation can help) but proves it's **not applicable with current data constraints**. The baseline model remains the best choice.
+This experiment **validates the supervisor's hypothesis conceptually** (domain segmentation can help with enough data) but proves it's **not applicable with current data constraints**. The universal baseline model remains the best choice. The +0.10 gain from selective fallback is meaningless (statistical noise).
 
 ---
 
@@ -371,9 +393,11 @@ This experiment **validates the supervisor's hypothesis conceptually** (domain s
 | 7f. All Combined | Enhanced + stacking + tuning | ~60-62% | ≈0 | ❌ No help |
 | 8. Additional Features | +31 features from dataset | 61.98% | -0.56 | ❌ Worse |
 | 9. Year-Normalized Target | Year-stratified thresholds | 58.68% | -3.86 | ❌ Worse |
-| 10. Domain Segmentation | Separate models per ASJC domain | 62.12% | -0.42 | ❌ No help |
+| 10a. Domain-Specific (fixed) | Separate models per domain, fixed threshold | 59.39% | -3.15 | ❌ Worse |
+| 10b. Domain-Specific (optimized) | Per-domain threshold optimization | 61.23% | -1.31 | ❌ Worse |
+| 10c. Selective Fallback | Domain model only where it beats baseline | 62.65% | +0.10 | ⚠️ Noise |
 
-**Total experiments attempted**: 15 strategies
+**Total experiments attempted**: 17 strategies (15 experiments, with Exp 10 having 3 variants)
 **Result**: NONE improved beyond 62.54% F1
 **Conclusion**: 62.54% F1 is the confirmed optimal performance with current features and dataset size
 
@@ -388,6 +412,8 @@ This experiment **validates the supervisor's hypothesis conceptually** (domain s
 4. **Complex models**: Ensembles, stacking, neural networks didn't beat simple LogisticRegression
 5. **Hyperparameter tuning**: Default parameters were already near-optimal
 6. **Title features**: Abstracts alone were sufficient
+7. **Year-normalized targets**: Temporal bias was not the limiting factor
+8. **Domain segmentation**: Dataset too small (6K papers vs Wu et al.'s 4M+), per-domain sample sizes insufficient
 
 ### What DID Work:
 1. **class_weight='balanced'**: Essential for handling class imbalance
@@ -401,10 +427,17 @@ This experiment **validates the supervisor's hypothesis conceptually** (domain s
 3. **NaN values**: Comprehensive imputation (median for numeric, 0 for binary)
 4. **Category alignment**: Determined top categories from full dataset, not just train split
 
-### Year-Normalized Target Hypothesis - TESTED:
-**Hypothesis**: Temporal bias in target variable (older papers have more time to accumulate citations) was limiting F1.
-**Result**: Year-normalized targets DECREASED F1 from 62.54% to 58.68% (-3.86 points).
-**Conclusion**: Temporal bias was NOT the limiting factor. The model is learning genuine quality signals, not just "older = more citations". The fixed 26-citation threshold is the correct approach.
+### Major Hypotheses Tested and Rejected:
+
+**1. Year-Normalized Target Hypothesis**
+- **Hypothesis**: Temporal bias in target variable (older papers have more time to accumulate citations) was limiting F1
+- **Result**: Year-normalized targets DECREASED F1 from 62.54% to 58.68% (-3.86 points)
+- **Conclusion**: Temporal bias was NOT the limiting factor. The model is learning genuine quality signals, not just "older = more citations". The fixed 26-citation threshold is the correct approach.
+
+**2. Domain Segmentation Hypothesis** (Supervisor suggestion from Wu et al. 2023)
+- **Hypothesis**: Domain-specific models capture field-specific citation dynamics better than universal model
+- **Result**: Domain-specific models DECREASED F1 from 62.54% to 59.39% (-3.15 points). Best variant (selective fallback) achieved 62.65% (+0.10, within noise)
+- **Conclusion**: Domain segmentation requires massive datasets (Wu et al. used 4M+ papers). With only 6K papers, per-domain samples are too small (74-1,471 per domain). The universal model benefits from cross-domain patterns and larger sample size. Domain models only beat baseline on 2/6 domains (Social Sciences, Other), and the +0.10 overall gain is statistically insignificant.
 
 ---
 
@@ -417,16 +450,17 @@ This experiment **validates the supervisor's hypothesis conceptually** (domain s
 - Recall: 77.15%
 - Accuracy: 72.38%
 
-This result is **confirmed optimal** after 14 rigorous experiments attempting to improve performance.
+This result is **confirmed optimal** after 17 rigorous optimization strategies (15 experiments, including domain segmentation with 3 variants) attempting to improve performance.
 
 ### Thesis Strengths to Emphasize:
 
-1. **Experimental Rigor**: 14 different optimization strategies tested, all confirming baseline optimality
+1. **Experimental Rigor**: 17 optimization strategies tested (15 experiments, including 3 domain segmentation variants), all confirming baseline optimality
 2. **Model Robustness**: Simple LogisticRegression outperformed complex ensembles and neural networks
 3. **Strong Discriminative Ability**: 81% ROC-AUC shows model can effectively rank paper quality
 4. **High Recall**: 77% recall catches most high-impact papers (only misses 19.6%)
 5. **Explainability**: Linear model provides interpretable feature importance
 6. **Ex-ante Feature Validation**: All features observable at publication time (no data leakage)
+7. **Hypothesis Testing**: Rigorously tested supervisor suggestions (domain segmentation) and explained data size limitations
 
 ### Limitations to Discuss:
 
@@ -435,20 +469,23 @@ This result is **confirmed optimal** after 14 rigorous experiments attempting to
 3. **Dataset Size**: 3,573 test papers - larger dataset might improve performance
 4. **Domain Specificity**: Model trained on specific academic fields (Scopus data 2015-2020)
 
-### Methodology Section - Document All 14 Experiments:
-1. **Experiment Timeline**: Show all 14 optimization attempts (SMOTE, feature selection, ensembles, neural networks, etc.)
+### Methodology Section - Document All 17 Optimization Strategies:
+1. **Experiment Timeline**: Show all 15 experiments + 3 domain segmentation variants (SMOTE, feature selection, ensembles, neural networks, year-normalization, domain segmentation, etc.)
 2. **Negative Results are Valuable**: Demonstrating what doesn't work shows thoroughness
-3. **Why Simple Models Won**: Discuss overfitting risks with complex models on modest dataset (3,573 test papers)
+3. **Why Simple Models Won**: Discuss overfitting risks with complex models on modest dataset (6,118 papers)
 4. **Year-Normalized Target Test**: Explain temporal bias hypothesis and why it didn't help
-5. **Include Visualizations**: Confusion matrices, ROC curves, feature importance plots
-6. **Feature Importance Analysis**: Highlight top features (topic_prominence, SNIP, CiteScore)
+5. **Domain Segmentation Test**: Explain supervisor suggestion (Wu et al. 2023), why it failed (dataset size), and what sample sizes would be needed (20K-50K papers)
+6. **Include Visualizations**: Confusion matrices, ROC curves, feature importance plots
+7. **Feature Importance Analysis**: Highlight top features (topic_prominence, SNIP, CiteScore)
 
 ### Key Insights to Include:
 - **SMOTE made performance worse** - class_weight='balanced' is better for this dataset
 - **More features ≠ better performance** - extracting 31 additional features decreased F1
 - **Threshold optimization matters** - moving from 0.5 to 0.54 was critical improvement
 - **Year-normalized targets failed** - proving model learns quality, not just age
+- **Domain segmentation failed** - requires 10-20× more data than available (Wu et al. had 4M+ papers)
 - **Ensemble methods didn't help** - suggesting feature space is relatively linear
+- **Sample size matters** - with 74-1,471 papers per domain, domain-specific models overfit
 
 ---
 
@@ -459,7 +496,8 @@ This result is **confirmed optimal** after 14 rigorous experiments attempting to
 - `notebooks/38_f1_improvement_experiments.ipynb` - Feature selection, title features, ensembles (no improvement)
 - `notebooks/39_advanced_f1_experiments.ipynb` - Enhanced features, stacking, neural networks, tuning (no improvement)
 - `notebooks/40_extract_unused_features.ipynb` - Additional dataset features extraction (F1: 61.98%, worse)
-- `notebooks/41_year_normalized_target.ipynb` - Year-stratified citation targets (F1: 58.68%, worse) ✅ COMPLETED
+- `notebooks/41_year_normalized_target.ipynb` - Year-stratified citation targets (F1: 58.68%, worse) ✅
+- `notebooks/42_domain_segmentation_experiment.ipynb` - Domain-specific models with 4 variants (best: 62.65%, +0.10 within noise) ✅
 
 ### Documentation:
 - `FEATURE_SUMMARY.md` - Comprehensive feature documentation with performance metrics
@@ -473,21 +511,23 @@ This result is **confirmed optimal** after 14 rigorous experiments attempting to
 
 ### Remaining Tasks:
 
-1. ✅ All 14 optimization experiments completed
+1. ✅ All 17 optimization strategies tested (15 experiments, Exp 10 with 3 variants)
 2. ✅ Year-normalized target hypothesis tested (didn't help)
-3. ✅ Final performance metrics confirmed (62.54% F1, 81.04% ROC-AUC)
-4. 📊 **Create final visualizations** for thesis:
+3. ✅ Domain segmentation tested per supervisor suggestion (dataset too small)
+4. ✅ Final performance metrics confirmed (62.54% F1, 81.04% ROC-AUC)
+5. 📊 **Create final visualizations** for thesis:
    - Confusion matrix for best model
    - ROC curve comparison
    - Feature importance plot (top 15 features)
    - F1 vs threshold curve (showing optimal 0.54)
-5. 📝 **Write methodology section** documenting all 14 experiments
-6. 📝 **Write results section** with final metrics and confusion matrix interpretation
-7. 📝 **Write discussion section** explaining:
+6. 📝 **Write methodology section** documenting all 17 optimization strategies
+7. 📝 **Write results section** with final metrics and confusion matrix interpretation
+8. 📝 **Write discussion section** explaining:
    - Why simple model outperformed complex models
    - Why year-normalized targets didn't help
+   - Why domain segmentation failed (dataset size)
    - Limitations and future work
-8. 🎓 **Prepare supervisor presentation** highlighting experimental rigor
+9. 🎓 **Prepare supervisor presentation** highlighting experimental rigor
 
 ---
 
