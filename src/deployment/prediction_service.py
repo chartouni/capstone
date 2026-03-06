@@ -120,56 +120,36 @@ class CitationPredictor:
             raise ValueError("No features could be extracted")
 
         X = pd.concat(features_list, axis=1)
+
+        # Validate feature alignment with training (if expected features available)
+        self._validate_features(X)
+
         return X
 
-    def _extract_metadata_features(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _validate_features(self, X: pd.DataFrame) -> None:
         """
-        Extract 8 metadata features used in the final model.
-
-        Features:
-            - is_open_access: Open access status (binary)
-            - topic_prominence: Scopus topic prominence percentile (0-100)
-            - pubtype_Article: Publication type is Article (binary)
-            - pubtype_Review: Publication type is Review (binary)
-            - sourcetype_Journal: Source type is Journal (binary)
-            - sourcetype_Conference Proceeding: Source type is Conference (binary)
-            - sourcetype_Book: Source type is Book (binary)
-            - sourcetype_Book Series: Source type is Book Series (binary)
-
-        Args:
-            df: DataFrame with publication metadata
-
-        Returns:
-            DataFrame with 8 metadata features
+        Validate that prepared features match training expectations.
+        Logs warnings if feature count/names differ; does not block prediction.
         """
-        idx = df.index
-        meta = pd.DataFrame(index=idx)
-
-        # Open access status
-        if 'is_open_access' in df.columns:
-            meta['is_open_access'] = df['is_open_access'].fillna(0).astype(int)
-        else:
-            meta['is_open_access'] = 0
-
-        # Topic prominence percentile (Scopus-provided, 0-100)
-        if 'topic_prominence' in df.columns:
-            meta['topic_prominence'] = df['topic_prominence'].fillna(df['topic_prominence'].median() if 'topic_prominence' in df.columns else 50.0)
-        else:
-            meta['topic_prominence'] = 50.0  # Default: median percentile
-
-        # Publication type (one-hot)
-        pub_type = df.get('Publication Type', pd.Series(['Article'] * len(df), index=idx))
-        meta['pubtype_Article'] = (pub_type == 'Article').astype(int)
-        meta['pubtype_Review'] = (pub_type == 'Review').astype(int)
-
-        # Source type (one-hot)
-        src_type = df.get('Source type', pd.Series(['Journal'] * len(df), index=idx))
-        meta['sourcetype_Journal'] = (src_type == 'Journal').astype(int)
-        meta['sourcetype_Conference Proceeding'] = (src_type == 'Conference Proceeding').astype(int)
-        meta['sourcetype_Book'] = (src_type == 'Book').astype(int)
-        meta['sourcetype_Book Series'] = (src_type == 'Book Series').astype(int)
-
-        return meta
+        expected_names = self.model_loader.get_expected_feature_names()
+        if expected_names is None:
+            return
+        actual = set(X.columns)
+        expected = set(expected_names)
+        if len(actual) != len(expected):
+            import warnings
+            warnings.warn(
+                f"Feature count mismatch: got {len(actual)}, expected {len(expected)}. "
+                "Predictions may be incorrect."
+            )
+        missing = expected - actual
+        extra = actual - expected
+        if missing or extra:
+            import warnings
+            if missing:
+                warnings.warn(f"Missing features ({len(missing)}): {list(missing)[:5]}...")
+            if extra:
+                warnings.warn(f"Extra features ({len(extra)}): {list(extra)[:5]}...")
 
     def predict_classification(
         self,

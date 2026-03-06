@@ -89,11 +89,11 @@
 
 All 5,019 features are **observable at publication time**:
 
-✅ **Venue metrics:** Temporal (journal's metrics IN publication year, based on prior years)
-✅ **Author features:** Observable from paper byline at publication
-✅ **Text features:** Derived from abstracts written before publication
+**Venue metrics:** Temporal (journal's metrics IN publication year, based on prior years)
+**Author features:** Observable from paper byline at publication
+**Text features:** Derived from abstracts written before publication
 
-❌ **Excluded to prevent data leakage:**
+**Excluded to prevent data leakage:**
 - Post-publication views/downloads
 - Citation-derived metrics (Field Weighted Citation Impact, etc.)
 - Current author H-index (includes future work)
@@ -138,6 +138,7 @@ All 5,019 features are **observable at publication time**:
 - **Additional metadata features (8):** 6.1% (regression), 10.4% (classification)
 
 **Impact of metadata features:** Despite being only 8 features (0.16% of total), they contribute 6-10% of predictive power. Topic prominence alone is the #1 classification feature.
+
 
 ---
 

@@ -198,3 +198,18 @@ for i, rec in enumerate(recommendations, 1):
 print("\n" + "="*80)
 print("For detailed guidance, see: EX_POST_FEATURE_AUDIT.md")
 print("="*80)
+
+X = pd.read_pickle('data/features/X_all.pkl')
+
+# Check if actual "Citations" column is in features
+if 'Citations' in X.columns:
+    print("❌ PROBLEM: Citations column found in features!")
+    print("   This is the target variable and should NOT be in X")
+else:
+    print("✅ OK: No 'Citations' column in features")
+    
+# Show which citation-related columns exist
+citation_cols = [col for col in X.columns if 'citation' in str(col).lower()]
+print(f"\nCitation-related features: {len(citation_cols)}")
+for col in citation_cols[:10]:  # Show first 10
+    print(f"  - {col}")

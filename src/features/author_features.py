@@ -22,18 +22,22 @@ def parse_author_count(authors: Union[str, float]) -> int:
     if pd.isna(authors):
         return 0
 
-    authors_str = str(authors)
+    authors_str = str(authors).strip()
 
-    # Try different separators
-    if ';' in authors_str:
-        return len([a for a in authors_str.split(';') if a.strip()])
-    elif ',' in authors_str:
-        # Be careful with commas - they might be in names
-        # Count by assuming format: "Last, First; Last, First"
-        return len([a for a in authors_str.split(';') if a.strip()])
-    else:
-        # Single author or unknown format
-        return 1 if authors_str.strip() else 0
+    # Unambiguous separators first: " and ", " & ", ";"
+    for sep in [' and ', ' & ', ';']:
+        if sep in authors_str:
+            return len([a for a in authors_str.split(sep) if a.strip()])
+
+    # Comma: ambiguous - could be "Last, First" (1 author) or "A, B, C" (multiple)
+    if ',' in authors_str:
+        parts = [p.strip() for p in authors_str.split(',') if p.strip()]
+        # Heuristic: exactly 2 parts often means "LastName, FirstName"
+        if len(parts) == 2:
+            return 1
+        return len(parts) if parts else 0
+
+    return 1 if authors_str else 0
 
 
 def parse_h_indices(h_index_str: Union[str, float]) -> List[int]:

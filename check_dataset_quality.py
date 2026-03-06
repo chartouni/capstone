@@ -163,14 +163,16 @@ venue_cols = ['SNIP (publication year)', 'CiteScore (publication year)', 'SJR (p
 for col in venue_cols:
     if col in df.columns:
         print(f"\n{col}:")
-        print(f"  Non-null: {df[col].notna().sum()} ({df[col].notna().sum()/len(df)*100:.1f}%)")
-        if df[col].notna().sum() > 0:
-            print(f"  Min: {df[col].min():.2f}")
-            print(f"  Max: {df[col].max():.2f}")
-            print(f"  Mean: {df[col].mean():.2f}")
+        vals = pd.to_numeric(df[col], errors='coerce')
+        valid = vals.notna().sum()
+        print(f"  Non-null (numeric): {valid} ({valid/len(df)*100:.1f}%)")
+        if valid > 0:
+            print(f"  Min: {vals.min():.2f}")
+            print(f"  Max: {vals.max():.2f}")
+            print(f"  Mean: {vals.mean():.2f}")
 
             # Check for negative values
-            negative = (df[col] < 0).sum()
+            negative = (vals < 0).sum()
             if negative > 0:
                 print(f"  ⚠️  WARNING: {negative} negative values!")
 
@@ -235,7 +237,7 @@ print("="*80)
 # Classification target
 print(f"\nClassification target (y_classification):")
 print(f"  High-impact (1): {y_class.sum()} ({y_class.mean()*100:.1f}%)")
-print(f"  Low-impact (0): {(~y_class).sum()} ({(1-y_class.mean())*100:.1f}%)")
+print(f"  Low-impact (0): {(y_class == 0).sum()} ({(1-y_class.mean())*100:.1f}%)")
 
 threshold = df['Citations'].quantile(0.75)
 print(f"  Threshold: {threshold:.0f} citations (75th percentile)")

@@ -157,6 +157,41 @@ class ModelLoader:
 
         return available
 
+    def get_expected_feature_names(self) -> Optional[list]:
+        """
+        Get expected feature names from training (for validation).
+        Tries: data/features/X_all.pkl columns, or model feature_names_/feature_name_.
+
+        Returns:
+            List of feature names, or None if not available
+        """
+        # Try saved feature matrix
+        x_path = self.features_dir / "X_all.pkl"
+        if x_path.exists():
+            try:
+                import pandas as pd
+                X = pd.read_pickle(x_path)
+                if hasattr(X, 'columns'):
+                    return list(X.columns)
+            except Exception:
+                pass
+        # Try from first available model
+        for subdir, loader in [
+            ("classification", self.load_classification_model),
+            ("regression", self.load_regression_model),
+        ]:
+            models = self.list_available_models().get(subdir, [])
+            if models:
+                try:
+                    m = loader(models[0])
+                    if hasattr(m, 'feature_names_in_'):
+                        return list(m.feature_names_in_)
+                    if hasattr(m, 'feature_name_'):
+                        return list(m.feature_name_)
+                except Exception:
+                    pass
+        return None
+
     def check_required_artifacts(self) -> Dict[str, bool]:
         """
         Check which required artifacts are available.

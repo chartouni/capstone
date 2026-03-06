@@ -56,6 +56,46 @@ def load_feature_importance():
         st.error(f"Error loading features: {e}")
         return []
 
+
+@st.cache_data
+def load_metrics_from_reports():
+    """
+    Load metrics from reports/metrics/ CSVs. Falls back to defaults if files missing.
+    Returns dict with: clf_df, reg_df, quick_stats (best F1, R2, etc.)
+    """
+    defaults = {
+        "clf_df": None,
+        "reg_df": None,
+        "quick_stats": {
+            "total_papers": "14,832",
+            "train_papers": "2,545",
+            "test_papers": "3,573",
+            "total_features": "5,019",
+            "best_f1": "68.2%",
+            "best_r2": "48.2%",
+        },
+    }
+    try:
+        metrics_dir = project_root / "reports" / "metrics"
+        clf_path = metrics_dir / "classification_results.csv"
+        reg_path = metrics_dir / "regression_results.csv"
+
+        clf_df = pd.read_csv(clf_path, index_col=0) if clf_path.exists() else None
+        reg_df = pd.read_csv(reg_path, index_col=0) if reg_path.exists() else None
+
+        if clf_df is not None and not clf_df.empty:
+            best_clf = clf_df.loc[clf_df["Test_F1"].idxmax()]
+            defaults["quick_stats"]["best_f1"] = f"{best_clf['Test_F1'] * 100:.1f}%"
+        if reg_df is not None and not reg_df.empty:
+            best_reg = reg_df.loc[reg_df["Test_R2"].idxmax()]
+            defaults["quick_stats"]["best_r2"] = f"{best_reg['Test_R2'] * 100:.1f}%"
+
+        defaults["clf_df"] = clf_df
+        defaults["reg_df"] = reg_df
+    except Exception:
+        pass  # Keep defaults on any error
+    return defaults
+
 def main():
     """Main application."""
 
@@ -76,12 +116,14 @@ def main():
         st.markdown("---")
 
         st.markdown("### 📈 Quick Stats")
-        st.metric("Total Papers", "14,832")
-        st.metric("Train (2015-2017)", "2,545")
-        st.metric("Test (2018-2020)", "3,573")
-        st.metric("Total Features", "5,019")
-        st.metric("Best F1 Score", "68.2%")
-        st.metric("Best R² Score", "48.2%")
+        metrics = load_metrics_from_reports()
+        qs = metrics["quick_stats"]
+        st.metric("Total Papers", qs["total_papers"])
+        st.metric("Train (2015-2017)", qs["train_papers"])
+        st.metric("Test (2018-2020)", qs["test_papers"])
+        st.metric("Total Features", qs["total_features"])
+        st.metric("Best F1 Score", qs["best_f1"])
+        st.metric("Best R² Score", qs["best_r2"])
 
     # Route to different pages
     if page == "🏠 Home":
@@ -127,17 +169,26 @@ def show_home():
         """)
 
     with col2:
-        st.info("""
+        metrics = load_metrics_from_reports()
+        clf_df = metrics["clf_df"]
+        reg_df = metrics["reg_df"]
+        qs = metrics["quick_stats"]
+        clf_line = "F1: 68.2%, ROC-AUC: 83.7%"
+        reg_line = f"R²: {qs['best_r2']}, Spearman: 67.5%"
+        if clf_df is not None and not clf_df.empty:
+            best = clf_df.loc[clf_df["Test_F1"].idxmax()]
+            clf_line = f"F1: {best['Test_F1']*100:.1f}%, ROC-AUC: {best['Test_ROC_AUC']*100:.1f}%"
+        if reg_df is not None and not reg_df.empty:
+            best = reg_df.loc[reg_df["Test_R2"].idxmax()]
+            reg_line = f"R²: {best['Test_R2']*100:.1f}%, Spearman: {best['Test_Spearman']*100:.1f}%"
+        st.info(f"""
         **Model Performance**
 
         **Classification:**
-        - F1 Score: 68.2%
-        - ROC-AUC: 83.7%
-        - Accuracy: 76.5%
+        - {clf_line}
 
         **Regression:**
-        - R² Score: 48.2%
-        - Spearman: 67.5%
+        - {reg_line}
         - MAE: 0.69 (log scale)
 
         **Validation:**
@@ -262,6 +313,9 @@ def show_performance():
     """Display model performance page."""
 
     st.subheader("📊 Model Performance")
+    metrics = load_metrics_from_reports()
+    clf_df = metrics["clf_df"]
+    reg_df = metrics["reg_df"]
 
     tab1, tab2 = st.tabs(["Classification", "Regression"])
 
@@ -270,28 +324,46 @@ def show_performance():
         st.markdown("**Task:** Identify high-impact papers (top 25% by citations, threshold: 26 citations)")
 
         col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            st.metric("Accuracy", "76.5%")
-        with col2:
-            st.metric("F1 Score", "68.2%")
-        with col3:
-            st.metric("Precision", "58.6%")
-        with col4:
-            st.metric("ROC-AUC", "83.7%")
+        if clf_df is not None and not clf_df.empty:
+            best_idx = clf_df["Test_F1"].idxmax()
+            best = clf_df.loc[best_idx]
+            model_name = str(best_idx)
+            with col1:
+                st.metric("Best Model", model_name)
+            with col2:
+                st.metric("F1 Score", f"{best['Test_F1']*100:.1f}%")
+            with col3:
+                st.metric("ROC-AUC", f"{best['Test_ROC_AUC']*100:.1f}%")
+            with col4:
+                st.metric("CV F1", f"{best['CV_F1']*100:.1f}%")
+        else:
+            with col1:
+                st.metric("Accuracy", "76.5%")
+            with col2:
+                st.metric("F1 Score", "68.2%")
+            with col3:
+                st.metric("Precision", "58.6%")
+            with col4:
+                st.metric("ROC-AUC", "83.7%")
 
         st.markdown("---")
 
         st.markdown("**Model Comparison:**")
 
-        perf_data = {
-            "Model": ["Logistic Regression", "Random Forest", "XGBoost", "LightGBM"],
-            "F1 Score": [0.682, 0.651, 0.676, 0.679],
-            "ROC-AUC": [0.832, 0.813, 0.814, 0.823],
-            "Accuracy": [0.755, 0.743, 0.731, 0.750]
-        }
-        perf_df = pd.DataFrame(perf_data)
-        st.dataframe(perf_df, use_container_width=True)
+        if clf_df is not None and not clf_df.empty:
+            # CSV has model names in index (or first col); ensure readable
+            disp = clf_df.copy()
+            disp.index.name = "Model"
+            st.dataframe(disp, use_container_width=True)
+        else:
+            perf_data = {
+                "Model": ["Logistic Regression", "Random Forest", "XGBoost", "LightGBM"],
+                "F1 Score": [0.682, 0.651, 0.676, 0.679],
+                "ROC-AUC": [0.832, 0.813, 0.814, 0.823],
+                "Accuracy": [0.755, 0.743, 0.731, 0.750]
+            }
+            perf_df = pd.DataFrame(perf_data)
+            st.dataframe(perf_df, use_container_width=True)
 
         st.markdown("**Classification Errors:**")
         col1, col2 = st.columns(2)
@@ -305,28 +377,44 @@ def show_performance():
         st.markdown("**Task:** Predict citation counts (log-transformed)")
 
         col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            st.metric("R² Score", "48.2%")
-        with col2:
-            st.metric("Spearman ρ", "67.5%")
-        with col3:
-            st.metric("MAE", "0.69", help="Mean Absolute Error (log scale)")
-        with col4:
-            st.metric("RMSE", "0.88", help="Root Mean Squared Error (log scale)")
+        if reg_df is not None and not reg_df.empty:
+            best_idx = reg_df["Test_R2"].idxmax()
+            best = reg_df.loc[best_idx]
+            model_name = str(best_idx)
+            with col1:
+                st.metric("Best Model", model_name)
+            with col2:
+                st.metric("R² Score", f"{best['Test_R2']*100:.1f}%")
+            with col3:
+                st.metric("Spearman ρ", f"{best['Test_Spearman']*100:.1f}%")
+            with col4:
+                st.metric("Test RMSE", f"{best['Test_RMSE']:.2f}", help="Root Mean Squared Error (log scale)")
+        else:
+            with col1:
+                st.metric("R² Score", "48.2%")
+            with col2:
+                st.metric("Spearman ρ", "67.5%")
+            with col3:
+                st.metric("MAE", "0.69", help="Mean Absolute Error (log scale)")
+            with col4:
+                st.metric("RMSE", "0.88", help="Root Mean Squared Error (log scale)")
 
         st.markdown("---")
 
         st.markdown("**Model Comparison:**")
 
-        reg_data = {
-            "Model": ["Linear Regression", "Random Forest", "XGBoost", "LightGBM"],
-            "R² Score": [-332.78, 0.482, 0.474, 0.478],
-            "Spearman": [0.102, 0.675, 0.669, 0.671],
-            "MAE": [3.927, 0.692, 0.699, 0.696]
-        }
-        reg_df = pd.DataFrame(reg_data)
-        st.dataframe(reg_df, use_container_width=True)
+        if reg_df is not None and not reg_df.empty:
+            disp = reg_df.copy()
+            disp.index.name = "Model"
+            st.dataframe(disp, use_container_width=True)
+        else:
+            reg_data = {
+                "Model": ["Linear Regression", "Random Forest", "XGBoost", "LightGBM"],
+                "R² Score": [-332.78, 0.482, 0.474, 0.478],
+                "Spearman": [0.102, 0.675, 0.669, 0.671],
+                "MAE": [3.927, 0.692, 0.699, 0.696]
+            }
+            st.dataframe(pd.DataFrame(reg_data), use_container_width=True)
 
         st.markdown("**Error Distribution by Citation Range:**")
 
@@ -550,7 +638,7 @@ def show_about():
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center'>
-        <p>CitaPred v1.0 | Built with ❤️ using Streamlit | © 2025 AUB</p>
+        <p>CitaPred v1.0 | Built using Streamlit | © 2025 AUB</p>
     </div>
     """, unsafe_allow_html=True)
 
