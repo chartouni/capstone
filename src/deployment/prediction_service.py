@@ -111,6 +111,10 @@ class CitationPredictor:
         author_features = extract_author_features(df, authors_col, h_index_col)
         features_list.append(author_features)
 
+        # Extract metadata features (8 features critical for model performance)
+        metadata_features = self._extract_metadata_features(df)
+        features_list.append(metadata_features)
+
         # Combine all features
         if len(features_list) == 0:
             raise ValueError("No features could be extracted")
@@ -211,6 +215,10 @@ class CitationPredictor:
         authors: str,
         h_indices: str,
         year: int,
+        is_open_access: bool = False,
+        topic_prominence: float = 50.0,
+        publication_type: str = 'Article',
+        source_type: str = 'Journal',
         classification_model: str = 'lightgbm',
         regression_model: str = 'lightgbm'
     ) -> Dict:
@@ -224,6 +232,10 @@ class CitationPredictor:
             authors: Authors string
             h_indices: H-index values
             year: Publication year
+            is_open_access: Whether the paper is open access
+            topic_prominence: Scopus topic prominence percentile (0-100)
+            publication_type: Publication type ('Article' or 'Review')
+            source_type: Source type ('Journal', 'Conference Proceeding', 'Book', 'Book Series')
             classification_model: Model for classification
             regression_model: Model for regression
 
@@ -237,7 +249,11 @@ class CitationPredictor:
             'Scopus Source title': venue,
             'Authors': authors,
             'Authors H-index': h_indices,
-            'Year': year
+            'Year': year,
+            'is_open_access': int(is_open_access),
+            'topic_prominence': topic_prominence,
+            'Publication Type': publication_type,
+            'Source type': source_type
         }])
 
         # Make predictions

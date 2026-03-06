@@ -126,6 +126,43 @@ def main():
             height=200
         )
 
+        # Metadata features
+        st.subheader("Publication Metadata")
+        st.caption("These 8 features contribute 26.9% of the model's predictive power.")
+
+        col5, col6 = st.columns(2)
+
+        with col5:
+            is_open_access = st.checkbox(
+                "Open Access",
+                value=False,
+                help="Check if the paper is published open access"
+            )
+
+            topic_prominence = st.slider(
+                "Topic Prominence Percentile",
+                min_value=0.0,
+                max_value=100.0,
+                value=50.0,
+                step=0.1,
+                help="Scopus Topic Prominence Percentile (0-100). This is the #1 most important feature. Find it in Scopus under the paper's topic details."
+            )
+
+        with col6:
+            publication_type = st.selectbox(
+                "Publication Type",
+                options=["Article", "Review"],
+                index=0,
+                help="Select whether this is a research article or a review paper"
+            )
+
+            source_type = st.selectbox(
+                "Source Type",
+                options=["Journal", "Conference Proceeding", "Book", "Book Series"],
+                index=0,
+                help="Select the type of publication venue"
+            )
+
         # Model selection
         st.subheader("Model Selection")
         col3, col4 = st.columns(2)
@@ -163,6 +200,10 @@ def main():
                     authors=authors,
                     h_indices=h_indices if h_indices else "",
                     year=year,
+                    is_open_access=is_open_access,
+                    topic_prominence=topic_prominence,
+                    publication_type=publication_type,
+                    source_type=source_type,
                     classification_model=classification_model,
                     regression_model=regression_model
                 )
@@ -242,6 +283,14 @@ def main():
                 **Authors:** {authors}
 
                 **H-indices:** {h_indices if h_indices else "Not provided"}
+
+                **Open Access:** {"Yes" if is_open_access else "No"}
+
+                **Topic Prominence:** {topic_prominence:.1f} / 100
+
+                **Publication Type:** {publication_type}
+
+                **Source Type:** {source_type}
 
                 **Abstract:** {abstract[:200]}{'...' if len(abstract) > 200 else ''}
                 """)
