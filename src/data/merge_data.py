@@ -105,8 +105,12 @@ def add_abstracts_to_scival(
     # Extract only EID and abstract from Scopus
     scopus_abstracts = scopus_df[[eid_column, abstract_column]].copy()
 
+    # Drop the existing abstract column from SciVal (contains URLs, not real text)
+    # so it doesn't conflict with the Scopus abstract during merge
+    scival_no_abstract = scival_df.drop(columns=[abstract_column], errors='ignore')
+
     # Merge with SciVal data
-    result_df = scival_df.merge(
+    result_df = scival_no_abstract.merge(
         scopus_abstracts,
         on=eid_column,
         how='left'

@@ -1,65 +1,65 @@
-# Notebooks Directory
+# Notebooks
 
-This directory contains Jupyter notebooks for exploration, analysis, and experimentation.
+Numbered by pipeline stage. Run in order within each group; groups are independent.
 
-## Notebook Organization
+## 00–06 · Data Pipeline
+| Notebook | Purpose |
+|----------|---------|
+| `00_paper_lookup.ipynb` | Initial paper lookup |
+| `01_data_exploration.ipynb` | Explore raw Scopus/SciVal files |
+| `02_data_merging.ipynb` | Merge on EID column |
+| `03_data_cleaning.ipynb` | Clean and validate merged data |
+| `04_peer_uni_data_check.ipynb` | Peer university data check |
+| `05_peer_uni_merge.ipynb` | Merge peer university data |
+| `06_all_unis_merge_clean.ipynb` | Final multi-university merge and clean |
 
-Notebooks should follow a numbered naming convention for sequential execution:
+## 10 · EDA
+| Notebook | Purpose |
+|----------|---------|
+| `10_eda_citation_distribution.ipynb` | Citation count distributions and target definition |
 
-### 1. Data Exploration & Preprocessing
-- `01_data_exploration.ipynb`: Initial data exploration of Scopus and SciVal files
-- `02_data_merging.ipynb`: Merge datasets using EID column
-- `03_data_cleaning.ipynb`: Clean and validate merged data
+## 20–24 · Feature Engineering
+| Notebook | Purpose |
+|----------|---------|
+| `20_feature_engineering_text.ipynb` | Abstract TF-IDF features |
+| `20b_feature_engineering_title.ipynb` | Title TF-IDF features |
+| `21_feature_engineering_venue.ipynb` | Venue prestige features |
+| `21b_venue_features_clean.ipynb` | Revised/clean venue feature pipeline |
+| `22_feature_engineering_author.ipynb` | Author reputation features |
+| `22b_feature_engineering_additional.ipynb` | Additional author/metadata features |
+| `23_feature_engineering_final.ipynb` | Combine all features into final matrix |
+| `24_rebuild_temporal_split.ipynb` | Rebuild train/test split with temporal cutoff |
 
-### 2. Exploratory Data Analysis
-- `10_eda_citation_distribution.ipynb`: Analyze citation count distributions
-- `11_eda_author_features.ipynb`: Explore author metrics (h-index, citations)
-- `12_eda_venue_analysis.ipynb`: Analyze venue prestige and impact
-- `13_eda_temporal_patterns.ipynb`: Explore temporal trends (2015-2020)
+## 30–36 · Model Development
+| Notebook | Purpose |
+|----------|---------|
+| `30_classification_models.ipynb` | Binary classification (top-25% highly cited) |
+| `31_regression_models.ipynb` | Citation count regression |
+| `35_hyperparameter_tuning.ipynb` | RandomizedSearchCV tuning |
+| `36_threshold_optimization.ipynb` | Decision threshold search → 0.54 |
 
-### 3. Feature Engineering
-- `20_feature_engineering_text.ipynb`: TF-IDF and text feature extraction
-- `21_feature_engineering_authors.ipynb`: Author reputation features
-- `22_feature_engineering_venues.ipynb`: Venue prestige features
-- `23_feature_engineering_final.ipynb`: Combine all features
+## 37–42 · Experiments
+| Notebook | Purpose |
+|----------|---------|
+| `37_smote_experiment.ipynb` | Exp 1: SMOTE oversampling |
+| `38_f1_improvement_experiments.ipynb` | Exp 2–6: Feature selection, title, ensembles |
+| `39_advanced_f1_experiments.ipynb` | Exp 7a–7f: Enhanced features, stacking, MLP |
+| `40_extract_unused_features.ipynb` | Exp 8: Additional dataset features |
+| `40b_feature_importance.ipynb` | Feature importance analysis |
+| `41_error_analysis.ipynb` | Error analysis on misclassified papers |
+| `41b_year_normalized_target.ipynb` | Exp 9: Year-normalised citation target |
+| `42_domain_segmentation_experiment.ipynb` | Exp 10: Domain-specific models → **63.33% F1** |
 
-### 4. Model Development
-- `30_classification_models.ipynb`: Binary classification (top 25%)
-- `31_regression_models.ipynb`: Citation count regression
-- `32_model_comparison.ipynb`: Compare all models
-- `33_hyperparameter_tuning.ipynb`: Optimize best models
+## 50–53 · Unsupervised Learning
+| Notebook | Purpose |
+|----------|---------|
+| `50_unsupervised_learning.ipynb` | Clustering and dimensionality reduction |
+| `51_ul_feature_integration.ipynb` | Integrate UL features into pipeline |
+| `52_add_ul_to_baseline.ipynb` | Test UL features against baseline |
+| `53_eda_feature_opportunities.ipynb` | EDA for further feature opportunities |
 
-### 5. Evaluation & Interpretation
-- `40_model_evaluation.ipynb`: Comprehensive evaluation metrics
-- `41_feature_importance.ipynb`: Analyze feature contributions
-- `42_error_analysis.ipynb`: Investigate prediction errors
-- `43_temporal_validation.ipynb`: Train on 2015-2017, test on 2018-2020
-
-### 6. Visualization & Reporting
-- `50_visualizations.ipynb`: Generate all charts and figures
-- `51_final_results.ipynb`: Summary of findings
-
-## Best Practices
-
-1. **Clear naming**: Use descriptive names with number prefixes
-2. **Documentation**: Add markdown cells explaining each section
-3. **Reproducibility**: Set random seeds, use configuration files
-4. **Save outputs**: Export figures to `reports/figures/`
-5. **Version control**: Clear outputs before committing notebooks
-
-## Running Notebooks
-
-```bash
-# Start Jupyter Lab
-jupyter lab
-
-# Or start Jupyter Notebook
-jupyter notebook
-```
-
-## Notes
-
-- Keep notebooks focused on single tasks
-- Use `src/` modules for reusable code
-- Save important plots and metrics
-- Document findings and insights
+## 98–99 · Data Quality
+| Notebook | Purpose |
+|----------|---------|
+| `98_investigate_missing_papers.ipynb` | Investigate missing paper records |
+| `99_data_quality_check.ipynb` | Final data quality validation |
