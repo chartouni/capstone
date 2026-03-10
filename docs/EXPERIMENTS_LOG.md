@@ -428,21 +428,22 @@ The selective hybrid approach validates the supervisor's domain-segmentation hyp
 
 **2. Domain Segmentation Hypothesis** (Supervisor suggestion from Wu et al. 2023)
 - **Hypothesis**: Domain-specific models capture field-specific citation dynamics better than universal model
-- **Result**: Domain-specific models DECREASED F1 from 62.54% to 59.39% (-3.15 points). Best variant (selective fallback) achieved 62.65% (+0.10, within noise)
-- **Conclusion**: Domain segmentation requires massive datasets (Wu et al. used 4M+ papers). With only 6K papers, per-domain samples are too small (74-1,471 per domain). The universal model benefits from cross-domain patterns and larger sample size. Domain models only beat baseline on 2/6 domains (Social Sciences, Other), and the +0.10 overall gain is statistically insignificant.
+- **Result**: Pure domain-specific models (fixed threshold) DECREASED F1 from 62.55% to 61.32% (-1.24 points). However, the **selective hybrid approach** — routing each paper to the better of domain model or universal baseline — achieved **63.33% F1 (+0.77 points)**, the best result across all experiments.
+- **Conclusion**: Pure domain segmentation requires larger datasets (Wu et al. used 4M+ papers). With only 6K papers, per-domain training sets are too small (74–1,471 per domain) for consistent gains. However, the **selective/hybrid approach** extracts real value by using domain models only where they demonstrably outperform the universal model (Social Sciences +0.83, Other +2.34), while retaining the universal model for the remaining 4 domains.
 
 ---
 
 ## Final Recommendations for Thesis
 
 ### Main Result to Report:
-**F1 Score: 62.54%** (LogisticRegression, class_weight='balanced', threshold=0.54)
-- ROC-AUC: 81.04%
-- Precision: 52.58%
-- Recall: 77.15%
-- Accuracy: 72.38%
+**Best F1 Score: 63.33%** (Selective domain segmentation — Experiment 10c)
 
-This result is **confirmed optimal** after 17 rigorous optimization strategies (15 experiments, including domain segmentation with 3 variants) attempting to improve performance.
+**Baseline model** (LogisticRegression, class_weight='balanced', threshold=0.54):
+- F1: 62.55%, ROC-AUC: 81.04%, Precision: 52.58%, Recall: 77.15%, Accuracy: 72.38%
+
+**Best method** (Selective domain hybrid, +0.77 over baseline): 63.33% F1
+
+This result is **the best achieved** after 17 rigorous optimization strategies (15 experiments, including domain segmentation with 3 variants).
 
 ### Thesis Strengths to Emphasize:
 
@@ -489,7 +490,7 @@ This result is **confirmed optimal** after 17 rigorous optimization strategies (
 - `notebooks/39_advanced_f1_experiments.ipynb` - Enhanced features, stacking, neural networks, tuning (no improvement)
 - `notebooks/40_extract_unused_features.ipynb` - Additional dataset features extraction (F1: 61.98%, worse)
 - `notebooks/41_year_normalized_target.ipynb` - Year-stratified citation targets (F1: 58.68%, worse) ✅
-- `notebooks/42_domain_segmentation_experiment.ipynb` - Domain-specific models with 4 variants (best: 62.65%, +0.10 within noise) ✅
+- `notebooks/42_domain_segmentation_experiment.ipynb` - Domain-specific models with 4 variants (best: 63.33%, +0.77 via selective hybrid) ✅
 
 ### Documentation:
 - `FEATURE_SUMMARY.md` - Comprehensive feature documentation with performance metrics
@@ -499,7 +500,7 @@ This result is **confirmed optimal** after 17 rigorous optimization strategies (
 
 ## Next Steps for Thesis Completion
 
-**All experiments are complete. Final model confirmed: 62.54% F1**
+**All experiments are complete. Best result: 63.33% F1 (Selective domain segmentation)**
 
 ### Remaining Tasks:
 

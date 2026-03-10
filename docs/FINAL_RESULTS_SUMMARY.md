@@ -44,9 +44,7 @@ Actual  Low   1664    841    (2,505 total)
 
 ## Experimental Validation
 
-### 14 Optimization Experiments Conducted
-
-All experiments attempted to improve F1 beyond 62.54%. **NONE succeeded.**
+### 17 Optimization Strategies Conducted (15 Experiments)
 
 | # | Strategy | F1 Result | Outcome |
 |---|----------|-----------|---------|
@@ -64,8 +62,11 @@ All experiments attempted to improve F1 beyond 62.54%. **NONE succeeded.**
 | 7f | All combined | ~60-62% | No improvement ❌ |
 | 8 | +31 additional features | 61.98% | -0.56 points ❌ |
 | 9 | Year-normalized targets | 58.68% | -3.86 points ❌ |
+| 10a | Domain-specific (fixed threshold) | 61.32% | -1.24 points ❌ |
+| 10b | Domain-specific (optimized thresholds) | 62.67% | +0.12 points ⚠️ |
+| **10c** | **Selective domain hybrid** | **63.33%** | **+0.77 points ✅ BEST** |
 
-**Conclusion**: 62.54% F1 is the confirmed optimal performance with current features.
+**Conclusion**: The selective domain hybrid (Exp 10c) is the best method, achieving **63.33% F1** (+0.77 over the 62.55% baseline).
 
 ---
 
@@ -77,6 +78,7 @@ All experiments attempted to improve F1 beyond 62.54%. **NONE succeeded.**
 3. ✅ **Threshold optimization**: Moving from 0.5 to 0.54 was critical
 4. ✅ **Ex-ante features only**: All features observable at publication time (no data leakage)
 5. ✅ **Temporal validation**: Train on 2015-2017, test on 2018-2020
+6. ✅ **Selective domain hybrid**: Using domain models only where they beat the baseline → **63.33% F1 (+0.77)**, the new best result
 
 ### What Doesn't Work
 1. ❌ **SMOTE**: Synthetic oversampling decreased F1 by 1.5 points
@@ -84,6 +86,7 @@ All experiments attempted to improve F1 beyond 62.54%. **NONE succeeded.**
 3. ❌ **More features**: Adding 31 additional features decreased F1 by 0.56 points
 4. ❌ **Complex models**: Neural networks, stacking, ensembles all performed worse
 5. ❌ **Year normalization**: Decreased F1 by 3.86 points (proves model learns quality, not age)
+6. ❌ **Pure domain-specific models**: Per-domain training sets too small; fixed-threshold variant decreased F1 by 1.24 points
 
 ### Critical Insight from Experiment 9
 The year-normalized target experiment tested whether temporal bias (older papers have more time to accumulate citations) was limiting performance.
@@ -138,7 +141,7 @@ The year-normalized target experiment tested whether temporal bias (older papers
 
 1. **Exceptional ROC-AUC (81.04%)**: Shows strong discriminative ability to rank papers by citation potential
 2. **High Recall (77.15%)**: Catches 80.4% of high-impact papers - only misses 19.6%
-3. **Experimentally Validated**: 14 rigorous experiments confirm optimality
+3. **Experimentally Validated**: 17 rigorous optimization strategies (15 experiments) tested
 4. **Robust and Simple**: Linear model outperforms complex ensembles and neural networks
 5. **Fully Explainable**: Feature importance analysis reveals what drives citations
 6. **No Data Leakage**: All features observable at publication time (ex-ante validation)
@@ -149,7 +152,7 @@ The year-normalized target experiment tested whether temporal bias (older papers
 ## Limitations and Future Work
 
 ### Current Limitations
-1. **F1 Score (62.54%)**: While optimal for current features, indicates citation prediction remains challenging
+1. **F1 Score (63.33% best / 62.55% baseline)**: Citation prediction remains challenging even with domain-aware hybrid approach
 2. **Modest Precision (52.58%)**: 47% of predicted high-impact papers are false positives
 3. **Dataset Size**: 3,573 test papers - larger dataset might improve generalization
 4. **Ex-ante Constraint**: Observable-at-publication features limit predictive power vs. post-publication metrics
@@ -168,13 +171,13 @@ The year-normalized target experiment tested whether temporal bias (older papers
 ## Thesis Recommendations
 
 ### Results Section
-- Report **62.54% F1** as final validated result
+- Report **63.33% F1** (Exp 10c selective domain hybrid) as best result; **62.55% F1** as baseline
 - Emphasize **81.04% ROC-AUC** showing strong ranking ability
 - Include confusion matrix with interpretation
-- Show all 14 experiments in summary table
+- Show all 17 optimization strategies in summary table
 
 ### Methodology Section
-- Document experimental rigor (14 optimization attempts)
+- Document experimental rigor (17 optimization strategies, 15 experiments)
 - Explain why simple model outperformed complex models (overfitting on modest dataset)
 - Discuss ex-ante feature validation process
 - Describe temporal train/test split strategy
@@ -183,10 +186,11 @@ The year-normalized target experiment tested whether temporal bias (older papers
 - **Negative results are valuable**: Show thorough investigation
 - **Year-normalized experiment**: Proves model learns quality, not age
 - **Feature importance insights**: Topic prominence and venue prestige are key
-- **Limitations**: Be honest about 62.54% F1 reflecting inherent difficulty of citation prediction
+- **Limitations**: Be honest about 63.33% F1 reflecting inherent difficulty of citation prediction
+- **Domain segmentation**: Validate supervisor's hypothesis — selective hybrid works, pure domain models need larger data
 
 ### Key Message for Supervisor
-*"After 14 rigorous optimization experiments, we've confirmed that 62.54% F1 represents the optimal performance ceiling with ex-ante features. The high ROC-AUC (81.04%) and recall (77.15%) demonstrate the model's strong ability to rank and identify high-impact papers. Most importantly, the year-normalized target experiment proves our model learns genuine quality signals rather than temporal artifacts."*
+*"After 17 rigorous optimization strategies (15 experiments), the best result achieved is 63.33% F1 using a selective domain segmentation hybrid (Exp 10c). The baseline LogisticRegression achieves 62.55% F1 with 81.04% ROC-AUC and 77.15% recall. The year-normalized target experiment proves the model learns genuine quality signals rather than temporal artifacts. The selective domain hybrid validates the supervisor's domain-segmentation hypothesis, extracting +0.77 F1 by routing papers to domain-specific models only where they outperform the universal baseline."*
 
 ---
 
@@ -226,7 +230,7 @@ y_pred = (y_pred_proba >= 0.54).astype(int)  # Optimized threshold
 ## Documentation Files
 
 1. **FEATURE_SUMMARY.md** - Comprehensive feature documentation (all 5,027 features)
-2. **EXPERIMENTS_LOG.md** - Detailed log of all 14 optimization experiments
+2. **EXPERIMENTS_LOG.md** - Detailed log of all 17 optimization strategies (15 experiments)
 3. **FINAL_RESULTS_SUMMARY.md** - This document
 4. **Notebooks**:
    - `notebooks/37_smote_experiment.ipynb`
@@ -234,6 +238,7 @@ y_pred = (y_pred_proba >= 0.54).astype(int)  # Optimized threshold
    - `notebooks/39_advanced_f1_experiments.ipynb`
    - `notebooks/40_extract_unused_features.ipynb`
    - `notebooks/41_year_normalized_target.ipynb`
+   - `notebooks/42_domain_segmentation_experiment.ipynb`
 
 ---
 
@@ -253,12 +258,12 @@ y_pred = (y_pred_proba >= 0.54).astype(int)  # Optimized threshold
 ## Final Checklist for Thesis
 
 - [x] All experiments completed and documented
-- [x] Final model selected and validated (62.54% F1)
+- [x] Final model selected and validated (63.33% F1 best; 62.55% baseline)
 - [x] Feature importance analysis complete
 - [x] Confusion matrices generated
 - [x] Ex-ante feature validation confirmed
 - [ ] Create final visualizations (ROC curves, feature importance plots)
-- [ ] Write methodology section (document all 14 experiments)
+- [ ] Write methodology section (document all 17 optimization strategies)
 - [ ] Write results section (metrics, confusion matrix interpretation)
 - [ ] Write discussion section (why simple model won, limitations, future work)
 - [ ] Prepare supervisor presentation
