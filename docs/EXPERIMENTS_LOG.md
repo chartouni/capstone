@@ -433,6 +433,45 @@ The selective hybrid approach validates the supervisor's domain-segmentation hyp
 
 ---
 
+### Experiment 11: Merged Peer University Data (Notebook 43)
+**Date**: March 2026
+**Hypothesis**: Training on more data from peer universities (Lehigh, Marquette, Villanova) will improve AUB citation prediction by exposing the model to a broader distribution of research papers.
+
+**Method**:
+- Merged AUB data with peer university data from Lehigh, Marquette, and Villanova
+- Train set grew from 2,605 → 6,255 papers (2.4× more training data)
+- Two evaluation scenarios:
+  - **Scenario A**: Merged model evaluated on AUB-only test set (direct comparison with baseline)
+  - **Scenario B**: Merged model evaluated on all-universities test set (cross-institution generalisation)
+
+**Results**:
+
+| Model / Test Set | F1 | ROC-AUC | Recall | Precision |
+|---|---|---|---|---|
+| AUB-only baseline | 62.55% | 81.04% | 77.15% | 52.58% |
+| Merged (AUB-only test) — Scenario A | 53.56% | 82.40% | 69.02% | 43.76% |
+| Merged (all-unis test) — Scenario B | 53.96% | 82.28% | 65.90% | 45.68% |
+
+**Scenario A — Impact on AUB predictions**:
+- F1 change: **-8.99 percentage points**
+- ROC-AUC change: +1.36 percentage points (marginal improvement in ranking)
+- Despite 2.4× more training data, AUB F1 degraded significantly
+
+**Scenario B — Cross-institution generalisation**:
+
+| Institution | F1 | ROC-AUC | n (test papers) |
+|---|---|---|---|
+| AUB | 53.56% | 82.37% | 3,573 |
+| Lehigh | 54.80% | 81.33% | 2,107 |
+| Marquette | 54.71% | 83.02% | 1,870 |
+| Villanova | 52.17% | 82.13% | 1,321 |
+
+**Conclusion**: ❌ WORSE for AUB. Merging peer university data degrades AUB F1 by ~9 points. ROC-AUC improves slightly (+1.36), suggesting ranking ability is preserved, but the decision boundary deteriorates. Likely cause: citation distributions and/or research field mixes differ systematically across institutions, so peer data introduces noise for AUB-specific predictions.
+
+**Implication**: Institution-specific models are preferable. If peer data is used, consider reweighting peer papers (e.g., by field or citation distribution similarity) rather than naïve merging.
+
+---
+
 ## Final Recommendations for Thesis
 
 ### Main Result to Report:
@@ -479,6 +518,7 @@ This result is **the best achieved** after 17 rigorous optimization strategies (
 - **Domain segmentation failed** - requires 10-20× more data than available (Wu et al. had 4M+ papers)
 - **Ensemble methods didn't help** - suggesting feature space is relatively linear
 - **Sample size matters** - with 74-1,471 papers per domain, domain-specific models overfit
+- **Peer data hurts AUB F1** - citation distributions differ across institutions; naïve merging degrades AUB-specific decision boundary by ~9 F1 points despite improving ROC-AUC slightly
 
 ---
 
@@ -491,6 +531,7 @@ This result is **the best achieved** after 17 rigorous optimization strategies (
 - `notebooks/40_extract_unused_features.ipynb` - Additional dataset features extraction (F1: 61.98%, worse)
 - `notebooks/41_year_normalized_target.ipynb` - Year-stratified citation targets (F1: 58.68%, worse) ✅
 - `notebooks/42_domain_segmentation_experiment.ipynb` - Domain-specific models with 4 variants (best: 63.33%, +0.77 via selective hybrid) ✅
+- `notebooks/43_merged_data_performance.ipynb` - Peer university data merging, 2 scenarios (F1 degraded to 53.56-53.96%) ✅
 
 ### Documentation:
 - `FEATURE_SUMMARY.md` - Comprehensive feature documentation with performance metrics
@@ -508,6 +549,7 @@ This result is **the best achieved** after 17 rigorous optimization strategies (
 2. ✅ Year-normalized target hypothesis tested (didn't help)
 3. ✅ Domain segmentation tested per supervisor suggestion (dataset too small)
 4. ✅ Final performance metrics confirmed (62.54% F1, 81.04% ROC-AUC)
+5. ✅ Merged peer university data tested — degrades AUB F1 by 8.99 points (Exp 11)
 5. 📊 **Create final visualizations** for thesis:
    - Confusion matrix for best model
    - ROC curve comparison
@@ -524,7 +566,7 @@ This result is **the best achieved** after 17 rigorous optimization strategies (
 
 ---
 
-**Last Updated**: February 2026
+**Last Updated**: March 2026
 **Status**: ✅ ALL EXPERIMENTS COMPLETE - Ready for thesis writing
-**Final Model**: LogisticRegression (class_weight='balanced', threshold=0.54)
+**Final Model**: LogisticRegression (class_weight='balanced', threshold=0.54, AUB-only training)
 **Final Performance**: F1=62.54%, ROC-AUC=81.04%, Recall=77.15%, Precision=52.58%

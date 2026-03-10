@@ -1,7 +1,7 @@
 # Citation Prediction Model - Final Results Summary
 
 **Project**: Citation Impact Prediction for Scientific Papers
-**Date**: February 2026
+**Date**: March 2026
 **Status**: All experiments complete - Model finalized
 
 ---
@@ -65,8 +65,9 @@ Actual  Low   1664    841    (2,505 total)
 | 10a | Domain-specific (fixed threshold) | 61.32% | -1.24 points ❌ |
 | 10b | Domain-specific (optimized thresholds) | 62.67% | +0.12 points ⚠️ |
 | **10c** | **Selective domain hybrid** | **63.33%** | **+0.77 points ✅ BEST** |
+| 11 | Merged peer university data (Scenario A) | 53.56% | -8.99 points ❌ |
 
-**Conclusion**: The selective domain hybrid (Exp 10c) is the best method, achieving **63.33% F1** (+0.77 over the 62.55% baseline).
+**Conclusion**: The selective domain hybrid (Exp 10c) is the best method, achieving **63.33% F1** (+0.77 over the 62.55% baseline). Merging peer university data (Exp 11) degrades AUB F1 by 8.99 points despite 2.4× more training data, confirming that institution-specific models are preferable.
 
 ---
 
@@ -87,6 +88,7 @@ Actual  Low   1664    841    (2,505 total)
 4. ❌ **Complex models**: Neural networks, stacking, ensembles all performed worse
 5. ❌ **Year normalization**: Decreased F1 by 3.86 points (proves model learns quality, not age)
 6. ❌ **Pure domain-specific models**: Per-domain training sets too small; fixed-threshold variant decreased F1 by 1.24 points
+7. ❌ **Merged peer university data**: Citation distributions differ across institutions; naïve merging decreased AUB F1 by 8.99 points (Exp 11)
 
 ### Critical Insight from Experiment 9
 The year-normalized target experiment tested whether temporal bias (older papers have more time to accumulate citations) was limiting performance.
@@ -155,8 +157,9 @@ The year-normalized target experiment tested whether temporal bias (older papers
 1. **F1 Score (63.33% best / 62.55% baseline)**: Citation prediction remains challenging even with domain-aware hybrid approach
 2. **Modest Precision (52.58%)**: 47% of predicted high-impact papers are false positives
 3. **Dataset Size**: 3,573 test papers - larger dataset might improve generalization
-4. **Ex-ante Constraint**: Observable-at-publication features limit predictive power vs. post-publication metrics
-5. **Domain Specificity**: Model trained on Scopus data (2015-2020) - performance may vary by field
+4. **Cross-Institution Generalisation**: Merged peer data (Lehigh, Marquette, Villanova) degrades AUB F1 by 8.99 points; ROC-AUC improves marginally (+1.36), indicating differing citation distributions across institutions
+5. **Ex-ante Constraint**: Observable-at-publication features limit predictive power vs. post-publication metrics
+6. **Domain Specificity**: Model trained on Scopus data (2015-2020) - performance may vary by field
 
 ### Future Work Opportunities
 1. **Post-publication features**: Incorporate early citation patterns (first 6 months)
@@ -239,6 +242,7 @@ y_pred = (y_pred_proba >= 0.54).astype(int)  # Optimized threshold
    - `notebooks/40_extract_unused_features.ipynb`
    - `notebooks/41_year_normalized_target.ipynb`
    - `notebooks/42_domain_segmentation_experiment.ipynb`
+   - `notebooks/43_merged_data_performance.ipynb`
 
 ---
 
