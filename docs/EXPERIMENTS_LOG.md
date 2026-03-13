@@ -388,7 +388,7 @@ The selective hybrid approach validates the supervisor's domain-segmentation hyp
 | 10b. Domain-Specific (optimized) | Per-domain threshold optimization | 62.67% | +0.12 | ⚠️ Marginal |
 | 10c. Selective (best of domain vs baseline) | Domain model only where it beats baseline | **63.33%** | **+0.77** | ✅ **BEST** |
 
-**Total experiments attempted**: 17 strategies (15 experiments, with Exp 10 having 3 variants)
+**Total experiments attempted**: 21 strategies (17 experiments, with Exp 10 and Exp 12 each having 3 variants)
 **Best result**: 63.33% F1 (Exp 10c — Selective domain segmentation)
 **Conclusion**: Selective domain-specific hybrid is the confirmed best method
 
@@ -469,6 +469,47 @@ The selective hybrid approach validates the supervisor's domain-segmentation hyp
 **Conclusion**: ❌ WORSE for AUB. Merging peer university data degrades AUB F1 by ~9 points. ROC-AUC improves slightly (+1.36), suggesting ranking ability is preserved, but the decision boundary deteriorates. Likely cause: citation distributions and/or research field mixes differ systematically across institutions, so peer data introduces noise for AUB-specific predictions.
 
 **Implication**: Institution-specific models are preferable. If peer data is used, consider reweighting peer papers (e.g., by field or citation distribution similarity) rather than naïve merging.
+
+---
+
+### Experiment 12: Domain Segmentation on Merged Data (Notebook 44)
+**Date**: March 2026
+**Hypothesis**: Combining the merged peer-university dataset (Exp 11) with domain segmentation (Exp 10) will recover the AUB F1 loss and potentially exceed the AUB-only selective hybrid (63.33%).
+
+**Method**:
+- Train on merged all-universities data (2015-2017), apply domain-specific models per field
+- Three domain segmentation variants: A (fixed 0.54 threshold), B (optimised per-domain threshold), C (selective hybrid — use domain model only if it outperforms universal baseline)
+- Two evaluation scenarios:
+  - **Scenario A**: Evaluated on AUB-only test set
+  - **Scenario B**: Evaluated on all-universities test set
+
+**Results — Scenario A (AUB-only test set)**:
+
+| Method | F1 | ROC-AUC | Recall | Precision |
+|---|---|---|---|---|
+| Baseline (merged universal) | 53.56% | 82.40% | 69.02% | 43.76% |
+| A: domain-specific (fixed 0.54) | 51.21% | 81.42% | 71.73% | 39.82% |
+| B: domain-specific (opt thresh) | 54.53% | 81.42% | 59.70% | 50.19% |
+| C: selective hybrid | **54.90%** | 81.88% | 59.85% | 50.70% |
+| AUB-only reference baseline | 63.33% | 81.04% | 77.15% | 52.58% |
+
+Per-domain decisions (Scenario A): Engineering & Technology → domain model; Medicine & Health → domain model; Multidisciplinary → domain model; Natural Sciences → baseline; Other → baseline; Social Sciences → baseline.
+
+**Results — Scenario B (All-universities test set)**:
+
+| Method | F1 | ROC-AUC | Recall | Precision |
+|---|---|---|---|---|
+| Baseline (merged universal) | 53.96% | 82.28% | 65.90% | 45.68% |
+| A: domain-specific (fixed 0.54) | 52.10% | 81.56% | 72.25% | 40.74% |
+| B: domain-specific (opt thresh) | 53.77% | 81.56% | 65.67% | 45.52% |
+| C: selective hybrid | **54.19%** | 82.18% | 67.55% | 45.24% |
+| nb43 merged reference | 53.96% | 82.28% | 65.90% | 45.68% |
+
+Per-domain decisions (Scenario B): Engineering & Technology → baseline; Medicine & Health → baseline; Multidisciplinary → baseline; Natural Sciences → domain model; Other → domain model; Social Sciences → domain model.
+
+**Conclusion**: ❌ Domain segmentation on merged data does NOT recover AUB performance. The selective hybrid (C) adds only +1.34pp over the merged universal baseline (Scenario A) and +0.23pp (Scenario B), while still trailing the AUB-only selective hybrid by **8.43pp**. Fixed-threshold domain models (A) degrade performance in both scenarios. Optimised thresholds (B) and the selective hybrid (C) yield marginal gains but the benefit is inconsistent across domains — domain routing decisions flip between scenarios, suggesting the domain signals are not stable across institution distributions.
+
+**Key insight**: The fundamental problem is not threshold selection or routing strategy — it is distribution mismatch. Merged peer data introduces noise for AUB-specific citation patterns. Domain segmentation cannot compensate for this mismatch. Institution-specific training remains superior.
 
 ---
 
