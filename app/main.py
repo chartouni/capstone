@@ -79,8 +79,8 @@ def main():
         st.metric("Total Papers", "14,832")
         st.metric("Train (2015-2017)", "2,545")
         st.metric("Test (2018-2020)", "3,573")
-        st.metric("Total Features", "5,019")
-        st.metric("Best F1 Score", "68.2%")
+        st.metric("Total Features", "5,023")
+        st.metric("Best F1 Score", "~62.6% (AUB-only)")
         st.metric("Best R² Score", "48.2%")
 
     # Route to different pages
@@ -114,15 +114,16 @@ def show_home():
 
         **How does it work?**
 
-        The system analyzes **5,019 features** from three categories:
+        The system analyzes **5,023 features** from four categories:
         - **Text Features** (5,000): TF-IDF analysis of paper abstracts
-        - **Venue Features** (9): Journal prestige metrics (SNIP, SJR, CiteScore, percentiles)
+        - **Venue Features** (5): Journal prestige percentiles (SNIP, CiteScore, SJR percentiles + derived)
         - **Author Features** (10): Collaboration patterns and team composition
+        - **Metadata Features** (8): Open access, topic prominence, publication/source type
 
         **Key Findings:**
-        - 📰 **Venue Prestige** (SJR, CiteScore) is a strong predictor of citation impact
+        - 📰 **Venue Prestige** (percentile scores) is a strong predictor of citation impact
         - ✍️ **Abstract Content** provides significant predictive power
-        - 📊 **Journal Metrics** (SNIP, CiteScore percentiles) matter greatly
+        - 📊 **Topic Prominence Percentile** is the single most important non-text feature
         - 👥 **Author Collaboration** has minimal direct effect
         """)
 
@@ -130,10 +131,10 @@ def show_home():
         st.info("""
         **Model Performance**
 
-        **Classification:**
-        - F1 Score: 68.2%
-        - ROC-AUC: 83.7%
-        - Accuracy: 76.5%
+        **Classification (AUB-only baseline):**
+        - F1 Score: ~62.6%
+        - ROC-AUC: ~81%
+        - Features: percentile-only venue scores
 
         **Regression:**
         - R² Score: 48.2%
@@ -142,7 +143,7 @@ def show_home():
 
         **Validation:**
         - Temporal split (2015-2017 train, 2018-2020 test)
-        - No data leakage
+        - Percentile-only venue features (no leakage)
         - Scientifically valid
         """)
 
@@ -175,9 +176,10 @@ def show_prediction():
 
         with col2:
             st.markdown("### Venue Information")
-            citescore = st.number_input("📊 CiteScore", min_value=0.0, max_value=50.0, value=3.0, step=0.1)
-            sjr = st.number_input("📈 SJR", min_value=0.0, max_value=10.0, value=0.5, step=0.1)
-            snip = st.number_input("📉 SNIP", min_value=0.0, max_value=5.0, value=1.0, step=0.1)
+            st.caption("Enter percentile scores (0–100). Find these in SciVal under journal metrics.")
+            citescore_pct = st.slider("📊 CiteScore Percentile", min_value=0, max_value=100, value=50)
+            sjr_pct = st.slider("📈 SJR Percentile", min_value=0, max_value=100, value=50)
+            snip_pct = st.slider("📉 SNIP Percentile", min_value=0, max_value=100, value=50)
 
         st.markdown("### Author Information")
         col3, col4 = st.columns(2)
@@ -201,16 +203,12 @@ def show_prediction():
                 st.subheader("📊 Prediction Results")
 
                 # Simple heuristic for demo (not actual model prediction)
-                score = (
-                    citescore * 25 +
-                    sjr * 35 +
-                    snip * 15 +
-                    num_authors * 3
-                )
+                avg_pct = (citescore_pct + sjr_pct + snip_pct) / 3
+                score = avg_pct * 0.7 + num_authors * 1.5
 
                 # Normalize to probability
-                probability = min(score / 250, 0.95)
-                predicted_citations = int(score * 0.9)
+                probability = min(score / 100, 0.95)
+                predicted_citations = int(avg_pct * 0.4)
 
                 col1, col2, col3 = st.columns(3)
 
@@ -240,8 +238,8 @@ def show_prediction():
                 st.markdown("### 🔍 Key Factors")
 
                 factors_data = {
-                    "Factor": ["SJR", "CiteScore", "SNIP", "Authors"],
-                    "Value": [sjr, citescore, snip, num_authors],
+                    "Factor": ["SJR Percentile", "CiteScore Percentile", "SNIP Percentile", "Authors"],
+                    "Value": [sjr_pct, citescore_pct, snip_pct, num_authors],
                     "Importance": [35, 32, 28, 5]
                 }
                 factors_df = pd.DataFrame(factors_data)
@@ -269,26 +267,29 @@ def show_performance():
         st.markdown("### Classification Model Performance")
         st.markdown("**Task:** Identify high-impact papers (top 25% by citations, threshold: 26 citations)")
 
+        st.info("ℹ️ Numbers below are from the AUB-only baseline with clean (percentile-only) venue features. Re-run nb42 to get final model results.")
+
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric("Accuracy", "76.5%")
+            st.metric("Accuracy", "~73%")
         with col2:
-            st.metric("F1 Score", "68.2%")
+            st.metric("F1 Score", "~62.6%")
         with col3:
-            st.metric("Precision", "58.6%")
+            st.metric("Precision", "~53%")
         with col4:
-            st.metric("ROC-AUC", "83.7%")
+            st.metric("ROC-AUC", "~81%")
 
         st.markdown("---")
 
         st.markdown("**Model Comparison:**")
 
+        st.caption("Placeholder — replace with actual values after re-running nb30 with clean features.")
         perf_data = {
             "Model": ["Logistic Regression", "Random Forest", "XGBoost", "LightGBM"],
-            "F1 Score": [0.682, 0.651, 0.676, 0.679],
-            "ROC-AUC": [0.832, 0.813, 0.814, 0.823],
-            "Accuracy": [0.755, 0.743, 0.731, 0.750]
+            "F1 Score": ["~62.6%", "TBD", "TBD", "TBD"],
+            "ROC-AUC": ["~81%", "TBD", "TBD", "TBD"],
+            "Accuracy": ["~73%", "TBD", "TBD", "TBD"]
         }
         perf_df = pd.DataFrame(perf_data)
         st.dataframe(perf_df, use_container_width=True)
@@ -363,19 +364,20 @@ def show_feature_importance():
 
         col1, col2 = st.columns(2)
 
+        st.caption("Feature importance below is from models trained with clean (percentile-only) venue features. Re-run nb40b for updated values.")
         with col1:
-            st.markdown("**Classification (LightGBM)**")
+            st.markdown("**Classification (Logistic Regression)**")
             clf_features = [
-                ("citescore", 45, "Venue"),
-                ("sjr", 44, "Venue"),
-                ("venue_score_composite", 34, "Venue"),
-                ("snip", 18, "Venue"),
+                ("topic_prominence", 45, "Metadata"),
+                ("avg_venue_percentile", 38, "Venue"),
+                ("citescore_percentile", 28, "Venue"),
+                ("snip_percentile", 22, "Venue"),
+                ("sjr_percentile", 20, "Venue"),
                 ("study", 17, "Text"),
-                ("num_authors", 17, "Author"),
-                ("avg_venue_percentile", 16, "Venue"),
-                ("authors_per_institution", 15, "Author"),
-                ("citescore_percentile", 14, "Venue"),
-                ("results", 13, "Text")
+                ("num_authors", 15, "Author"),
+                ("is_top_journal", 14, "Venue"),
+                ("authors_per_institution", 13, "Author"),
+                ("results", 12, "Text")
             ]
             clf_df = pd.DataFrame(clf_features, columns=["Feature", "Importance", "Category"])
             st.dataframe(clf_df, use_container_width=True)
@@ -383,16 +385,16 @@ def show_feature_importance():
         with col2:
             st.markdown("**Regression (Random Forest)**")
             reg_features = [
-                ("sjr", 0.150, "Venue"),
-                ("citescore", 0.055, "Venue"),
-                ("venue_score_composite", 0.040, "Venue"),
-                ("avg_venue_percentile", 0.025, "Venue"),
-                ("snip", 0.015, "Venue"),
+                ("avg_venue_percentile", 0.085, "Venue"),
+                ("citescore_percentile", 0.055, "Venue"),
+                ("sjr_percentile", 0.040, "Venue"),
+                ("topic_prominence", 0.030, "Metadata"),
+                ("snip_percentile", 0.015, "Venue"),
                 ("num_authors", 0.008, "Author"),
-                ("2015", 0.006, "Text"),
-                ("review", 0.005, "Text"),
-                ("study", 0.004, "Text"),
-                ("results", 0.004, "Text")
+                ("review", 0.006, "Text"),
+                ("study", 0.005, "Text"),
+                ("results", 0.004, "Text"),
+                ("2015", 0.004, "Text")
             ]
             reg_df = pd.DataFrame(reg_features, columns=["Feature", "Importance", "Category"])
             st.dataframe(reg_df, use_container_width=True)
@@ -405,9 +407,9 @@ def show_feature_importance():
         with col1:
             st.markdown("**Classification**")
             cat_clf = {
-                "Category": ["Text", "Venue", "Other", "Author"],
-                "Importance": [711, 226, 134, 49],
-                "Percentage": [63.5, 20.2, 12.0, 4.4]
+                "Category": ["Text", "Venue", "Metadata", "Author"],
+                "Importance": [711, 180, 110, 49],
+                "Percentage": [67.5, 17.1, 10.5, 4.7]
             }
             cat_clf_df = pd.DataFrame(cat_clf)
             st.dataframe(cat_clf_df, use_container_width=True)
@@ -421,9 +423,9 @@ def show_feature_importance():
         with col2:
             st.markdown("**Regression**")
             cat_reg = {
-                "Category": ["Text", "Venue", "Other", "Author"],
-                "Importance": [0.397, 0.311, 0.276, 0.017],
-                "Percentage": [39.7, 31.1, 27.6, 1.7]
+                "Category": ["Text", "Venue", "Metadata", "Author"],
+                "Importance": [0.397, 0.250, 0.140, 0.017],
+                "Percentage": [49.5, 31.2, 17.5, 2.1]
             }
             cat_reg_df = pd.DataFrame(cat_reg)
             st.dataframe(cat_reg_df, use_container_width=True)
@@ -485,8 +487,9 @@ def show_about():
 
     **Feature Engineering:**
     - **Text Features** (5,000): TF-IDF vectorization of abstracts (1-2 grams, min_df=5, max_df=0.8)
-    - **Venue Features** (9): SNIP, SJR, CiteScore + percentiles, composite scores
+    - **Venue Features** (5): SNIP, CiteScore, SJR **percentiles only** + avg_venue_percentile + is_top_journal
     - **Author Features** (10): Team size, collaboration metrics, institutional diversity
+    - **Metadata Features** (8): Open access, topic prominence percentile, publication type, source type
 
     **Models:**
     - **Classification**: Logistic Regression, Random Forest, XGBoost, LightGBM
@@ -500,10 +503,10 @@ def show_about():
 
     ### Performance
 
-    **Best Classification Model: Logistic Regression**
-    - F1 Score: 68.2%
-    - ROC-AUC: 83.7%
-    - Accuracy: 76.5%
+    **Best Classification Model: Logistic Regression (AUB-only baseline)**
+    - F1 Score: ~62.6% (clean features, re-run nb42 for final result)
+    - ROC-AUC: ~81%
+    - Features: percentile-only venue scores (no temporal leakage)
 
     **Best Regression Model: Random Forest**
     - R² Score: 48.2%
