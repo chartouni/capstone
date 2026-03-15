@@ -243,6 +243,7 @@ y_pred = (y_pred_proba >= 0.54).astype(int)  # Optimized threshold
    - `notebooks/41_year_normalized_target.ipynb`
    - `notebooks/42_domain_segmentation_experiment.ipynb`
    - `notebooks/43_merged_data_performance.ipynb`
+   - `notebooks/44_merged_domain_segmentation.ipynb`
 
 ---
 
