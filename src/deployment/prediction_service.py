@@ -187,9 +187,14 @@ class CitationPredictor:
         X = pd.concat(features_list, axis=1)
         return X
 
+    # Reference year used when computing years_since_publication.
+    # Set to the last year of training data so the feature is consistent
+    # between training and inference.
+    REFERENCE_YEAR: int = 2017
+
     def _extract_metadata_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Extract 8 metadata features used in the final model.
+        Extract metadata features used in the final model.
 
         Features:
             - is_open_access: Open access status (binary)
@@ -200,12 +205,14 @@ class CitationPredictor:
             - sourcetype_Conference Proceeding: Source type is Conference (binary)
             - sourcetype_Book: Source type is Book (binary)
             - sourcetype_Book Series: Source type is Book Series (binary)
+            - years_since_publication: REFERENCE_YEAR - Year (citation exposure time proxy)
+            - pub_year: raw publication year
 
         Args:
             df: DataFrame with publication metadata
 
         Returns:
-            DataFrame with 8 metadata features
+            DataFrame with metadata features
         """
         idx = df.index
         meta = pd.DataFrame(index=idx)
@@ -234,6 +241,14 @@ class CitationPredictor:
         meta['sourcetype_Conference Proceeding'] = (src_type == 'Conference Proceeding').astype(int)
         meta['sourcetype_Book'] = (src_type == 'Book').astype(int)
         meta['sourcetype_Book Series'] = (src_type == 'Book Series').astype(int)
+
+        # Temporal features — citation exposure time
+        if 'Year' in df.columns:
+            pub_year = pd.to_numeric(df['Year'], errors='coerce')
+        else:
+            pub_year = pd.Series(self.REFERENCE_YEAR, index=idx, dtype=float)
+        meta['pub_year'] = pub_year.fillna(self.REFERENCE_YEAR)
+        meta['years_since_publication'] = (self.REFERENCE_YEAR - meta['pub_year']).clip(lower=0)
 
         return meta
 
