@@ -142,6 +142,26 @@ class ModelLoader:
         self._artifacts_cache['venue_stats'] = stats
         return stats
 
+    def load_citation_threshold(self) -> Optional[float]:
+        """
+        Load the p75 citation threshold saved during regression training.
+
+        Returns:
+            Float threshold value, or None if the file does not exist
+        """
+        if 'citation_threshold' in self._artifacts_cache:
+            return self._artifacts_cache['citation_threshold']
+
+        threshold_path = self.models_dir / "regression" / "citation_threshold_p75.pkl"
+        if not threshold_path.exists():
+            return None
+
+        with open(threshold_path, 'rb') as f:
+            threshold = pickle.load(f)
+
+        self._artifacts_cache['citation_threshold'] = float(threshold)
+        return float(threshold)
+
     def list_available_models(self) -> Dict[str, list]:
         """
         List all available trained models.
@@ -149,23 +169,26 @@ class ModelLoader:
         Returns:
             Dictionary with 'classification' and 'regression' model lists
         """
+        # Artifacts that live in model directories but are not models
+        _non_model_files = {'citation_threshold_p75'}
+
         available = {
             'classification': [],
             'regression': []
         }
 
-        # Check classification models
         cls_dir = self.models_dir / "classification"
         if cls_dir.exists():
             available['classification'] = [
                 f.stem for f in cls_dir.glob("*.pkl")
+                if f.stem not in _non_model_files
             ]
 
-        # Check regression models
         reg_dir = self.models_dir / "regression"
         if reg_dir.exists():
             available['regression'] = [
                 f.stem for f in reg_dir.glob("*.pkl")
+                if f.stem not in _non_model_files
             ]
 
         return available

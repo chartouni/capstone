@@ -33,6 +33,7 @@ class CitationPredictor:
         self.model_loader = ModelLoader(models_dir, features_dir)
         self.tfidf_vectorizer = None
         self.venue_stats = None
+        self.citation_threshold = None  # p75 threshold for regression-derived classification
         self._initialized = False
 
     def initialize(self) -> Dict[str, bool]:
@@ -60,8 +61,59 @@ class CitationPredictor:
             print(f"Warning: Could not load venue statistics: {e}")
             status['venue_stats'] = False
 
+        # Load citation threshold for regression-derived classification (optional)
+        try:
+            self.citation_threshold = self.model_loader.load_citation_threshold()
+            status['citation_threshold'] = self.citation_threshold is not None
+        except Exception as e:
+            print(f"Warning: Could not load citation threshold: {e}")
+            status['citation_threshold'] = False
+
         self._initialized = True
         return status
+
+    def _extract_scopus_metrics(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Extract Scopus journal metrics from raw dataframe columns when available.
+
+        At inference (single prediction) these columns won't exist, so the method
+        returns neutral defaults: 50 for percentiles, 0 for raw scores.
+        At batch/training time the real Scopus values are used.
+        """
+        features = pd.DataFrame(index=df.index)
+
+        col_map = {
+            'citescore': ['CiteScore', 'citescore'],
+            'sjr':       ['SJR', 'sjr'],
+            'snip':      ['SNIP', 'snip'],
+            'citescore_pct': ['CiteScore Percentile', 'citescore_pct', 'Percentile (CiteScore)'],
+            'sjr_pct':   ['SJR Percentile', 'sjr_pct', 'Percentile (SJR)'],
+            'snip_pct':  ['SNIP Percentile', 'snip_pct', 'Percentile (SNIP)'],
+        }
+
+        found = {}
+        for feat, candidates in col_map.items():
+            for col in candidates:
+                if col in df.columns:
+                    found[feat] = pd.to_numeric(df[col], errors='coerce')
+                    break
+
+        # Raw scores: 0 when not available
+        for feat in ['citescore', 'sjr', 'snip']:
+            features[feat] = found.get(feat, pd.Series(0.0, index=df.index)).fillna(0.0)
+
+        # Percentiles: 50 (neutral midpoint) when not available
+        for feat in ['citescore_pct', 'sjr_pct', 'snip_pct']:
+            features[feat] = found.get(feat, pd.Series(50.0, index=df.index)).fillna(50.0)
+
+        features['avg_venue_percentile'] = features[['citescore_pct', 'sjr_pct', 'snip_pct']].mean(axis=1)
+        features['venue_score_composite'] = (
+            0.4 * features['citescore_pct'] +
+            0.3 * features['sjr_pct'] +
+            0.3 * features['snip_pct']
+        ) / 100.0
+
+        return features
 
     def prepare_features(
         self,
@@ -114,6 +166,10 @@ class CitationPredictor:
         # Extract metadata features (8 features critical for model performance)
         metadata_features = self._extract_metadata_features(df)
         features_list.append(metadata_features)
+
+        # Extract Scopus journal metrics (real values in batch/training, neutral defaults in single prediction)
+        scopus_features = self._extract_scopus_metrics(df)
+        features_list.append(scopus_features)
 
         # Combine all features
         if len(features_list) == 0:
@@ -208,6 +264,21 @@ class CitationPredictor:
             if col.endswith('_percentile') or col.endswith('_pct'):
                 X[col] = 50.0
         return X
+
+    def _classify_from_regression(self, predicted_citations: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Derive binary high-impact labels and soft probabilities from regression output.
+
+        Uses a sigmoid centred on the p75 citation threshold so that:
+          - predicted == threshold  → 50 % probability
+          - predicted == 2×threshold → ~95 % probability
+          - predicted == 0           → ~5 % probability
+        """
+        thr = self.citation_threshold
+        labels = (predicted_citations >= thr).astype(int)
+        distance = (predicted_citations - thr) / max(thr, 1.0)
+        probabilities = 1.0 / (1.0 + np.exp(-3.0 * distance))
+        return labels, probabilities
 
     def predict_classification(
         self,
@@ -320,15 +391,21 @@ class CitationPredictor:
             'Source type': source_type
         }])
 
-        # Make predictions
-        cls_pred, cls_prob = self.predict_classification(df, classification_model)
+        # Regression prediction (always computed)
         reg_pred = self.predict_regression(df, regression_model)
+
+        # Derive classification from regression when threshold is available;
+        # fall back to the standalone classifier otherwise.
+        if self.citation_threshold is not None:
+            cls_pred, cls_prob = self._classify_from_regression(reg_pred)
+        else:
+            cls_pred, cls_prob = self.predict_classification(df, classification_model)
 
         return {
             'is_high_impact': bool(cls_pred[0]),
             'high_impact_probability': float(cls_prob[0]),
             'predicted_citations': float(reg_pred[0]),
-            'classification_model': classification_model,
+            'classification_model': 'regression-derived' if self.citation_threshold is not None else classification_model,
             'regression_model': regression_model
         }
 
@@ -349,11 +426,13 @@ class CitationPredictor:
         Returns:
             DataFrame with original data plus predictions
         """
-        # Make predictions
-        cls_pred, cls_prob = self.predict_classification(df, classification_model)
         reg_pred = self.predict_regression(df, regression_model)
 
-        # Add predictions to dataframe
+        if self.citation_threshold is not None:
+            cls_pred, cls_prob = self._classify_from_regression(reg_pred)
+        else:
+            cls_pred, cls_prob = self.predict_classification(df, classification_model)
+
         result = df.copy()
         result['is_high_impact'] = cls_pred
         result['high_impact_probability'] = cls_prob
