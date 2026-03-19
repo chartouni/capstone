@@ -209,7 +209,8 @@ class CitationPredictor:
 
         # Topic prominence percentile (Scopus-provided, 0-100)
         if 'topic_prominence' in df.columns:
-            meta['topic_prominence'] = df['topic_prominence'].fillna(df['topic_prominence'].median() if 'topic_prominence' in df.columns else 50.0)
+            tp = pd.to_numeric(df['topic_prominence'], errors='coerce')
+            meta['topic_prominence'] = tp.fillna(tp.median() if tp.notna().any() else 50.0)
         else:
             meta['topic_prominence'] = 50.0  # Default: median percentile
 
