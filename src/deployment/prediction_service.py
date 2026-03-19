@@ -171,6 +171,36 @@ class CitationPredictor:
 
         return meta
 
+    @staticmethod
+    def _get_model_feature_names(model) -> Optional[List[str]]:
+        """Return the feature names the model was trained on, or None if unavailable."""
+        # XGBoost
+        try:
+            names = model.get_booster().feature_names
+            if names:
+                return names
+        except Exception:
+            pass
+        # sklearn / LightGBM
+        for attr in ('feature_names_in_', 'feature_name_'):
+            names = getattr(model, attr, None)
+            if names is not None:
+                return list(names)
+        return None
+
+    @staticmethod
+    def _align_features(X: pd.DataFrame, feature_names: Optional[List[str]]) -> pd.DataFrame:
+        """
+        Reindex X to match the model's expected feature names.
+        Missing columns are filled with 0; extra columns are dropped.
+        """
+        if feature_names is None:
+            return X
+        missing = [c for c in feature_names if c not in X.columns]
+        if missing:
+            print(f"Info: filling {len(missing)} missing feature(s) with 0: {missing[:5]}{'...' if len(missing) > 5 else ''}")
+        return X.reindex(columns=feature_names, fill_value=0)
+
     def predict_classification(
         self,
         df: pd.DataFrame,
@@ -191,6 +221,9 @@ class CitationPredictor:
 
         # Load model
         model = self.model_loader.load_classification_model(model_name)
+
+        # Align feature columns to what the model was trained on
+        X = self._align_features(X, self._get_model_feature_names(model))
 
         # Make predictions
         predictions = model.predict(X)
@@ -218,6 +251,9 @@ class CitationPredictor:
 
         # Load model
         model = self.model_loader.load_regression_model(model_name)
+
+        # Align feature columns to what the model was trained on
+        X = self._align_features(X, self._get_model_feature_names(model))
 
         # Make predictions
         log_predictions = model.predict(X)
