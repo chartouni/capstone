@@ -192,14 +192,22 @@ class CitationPredictor:
     def _align_features(X: pd.DataFrame, feature_names: Optional[List[str]]) -> pd.DataFrame:
         """
         Reindex X to match the model's expected feature names.
-        Missing columns are filled with 0; extra columns are dropped.
+
+        Fill strategy for missing columns:
+        - Features ending in '_percentile' or '_pct': fill with 50 (neutral midpoint)
+        - All other missing features: fill with 0
         """
         if feature_names is None:
             return X
         missing = [c for c in feature_names if c not in X.columns]
         if missing:
-            print(f"Info: filling {len(missing)} missing feature(s) with 0: {missing[:5]}{'...' if len(missing) > 5 else ''}")
-        return X.reindex(columns=feature_names, fill_value=0)
+            print(f"Info: filling {len(missing)} missing feature(s): {missing[:5]}{'...' if len(missing) > 5 else ''}")
+        X = X.reindex(columns=feature_names, fill_value=0)
+        # Override fill for percentile features — 0 means "worst venue", 50 is neutral
+        for col in missing:
+            if col.endswith('_percentile') or col.endswith('_pct'):
+                X[col] = 50.0
+        return X
 
     def predict_classification(
         self,
