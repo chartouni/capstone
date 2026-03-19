@@ -188,9 +188,10 @@ class CitationPredictor:
         return X
 
     # Reference year used when computing years_since_publication.
-    # Set to the last year of training data so the feature is consistent
-    # between training and inference.
-    REFERENCE_YEAR: int = 2017
+    # Use approximate data-collection year so all papers in 2015-2020 get a
+    # positive, spread-out value (4–9 years). Using TRAIN_END (2017) would
+    # clip test-set papers to 0, destroying the signal.
+    REFERENCE_YEAR: int = 2024
 
     def _extract_metadata_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -248,7 +249,9 @@ class CitationPredictor:
         else:
             pub_year = pd.Series(self.REFERENCE_YEAR, index=idx, dtype=float)
         meta['pub_year'] = pub_year.fillna(self.REFERENCE_YEAR)
-        meta['years_since_publication'] = (self.REFERENCE_YEAR - meta['pub_year']).clip(lower=0)
+        # No clip — papers newer than REFERENCE_YEAR would be clipped to 0, losing signal.
+        # With REFERENCE_YEAR=2024 all 2015-2020 papers are in [4, 9] range.
+        meta['years_since_publication'] = self.REFERENCE_YEAR - meta['pub_year']
 
         return meta
 
