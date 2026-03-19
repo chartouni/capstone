@@ -137,12 +137,14 @@ def main():
     try:
         predictor, init_status = load_predictor()
 
-        if not all(init_status.values()):
-            st.warning("⚠️ Some prediction components are missing:")
-            for component, status in init_status.items():
-                if not status:
-                    st.markdown(f"- ❌ {component}")
-
+        # venue_stats is optional — only block if required components are missing
+        required = {k: v for k, v in init_status.items() if k != "venue_stats"}
+        if not all(required.values()):
+            st.warning("⚠️ Some required prediction components are missing:")
+            for component, ok in init_status.items():
+                if not ok:
+                    label = f"{component} _(optional)_" if component == "venue_stats" else component
+                    st.markdown(f"- ❌ {label}")
             st.info("""
             **To enable predictions, you need:**
             1. Trained models in `models/classification/` and `models/regression/`
@@ -152,6 +154,9 @@ def main():
             These files should be generated during the training phase using the notebooks.
             """)
             return
+
+        if not init_status.get("venue_stats"):
+            st.info("ℹ️ Venue statistics not found — venue features will use defaults.")
 
         available_models = predictor.get_available_models()
 
