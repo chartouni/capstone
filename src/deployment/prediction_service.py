@@ -83,12 +83,21 @@ class CitationPredictor:
         features = pd.DataFrame(index=df.index)
 
         col_map = {
-            'citescore': ['CiteScore', 'citescore'],
-            'sjr':       ['SJR', 'sjr'],
-            'snip':      ['SNIP', 'snip'],
-            'citescore_pct': ['CiteScore Percentile', 'citescore_pct', 'Percentile (CiteScore)'],
-            'sjr_pct':   ['SJR Percentile', 'sjr_pct', 'Percentile (SJR)'],
-            'snip_pct':  ['SNIP Percentile', 'snip_pct', 'Percentile (SNIP)'],
+            'citescore': ['CiteScore', 'citescore', 'Cite Score', 'cite_score'],
+            'sjr':       ['SJR', 'sjr', 'SCImago Journal Rank'],
+            'snip':      ['SNIP', 'snip', 'Source Normalized Impact per Paper'],
+            'citescore_pct': [
+                'CiteScore Percentile', 'citescore_pct', 'Percentile (CiteScore)',
+                'CiteScore percentile', 'Percentile CiteScore', 'CiteScore_Percentile',
+            ],
+            'sjr_pct': [
+                'SJR Percentile', 'sjr_pct', 'Percentile (SJR)',
+                'SJR percentile', 'Percentile SJR', 'SJR_Percentile',
+            ],
+            'snip_pct': [
+                'SNIP Percentile', 'snip_pct', 'Percentile (SNIP)',
+                'SNIP percentile', 'Percentile SNIP', 'SNIP_Percentile',
+            ],
         }
 
         found = {}
