@@ -26,6 +26,19 @@ class ModelLoader:
         self._models_cache = {}
         self._artifacts_cache = {}
 
+    @staticmethod
+    def _unwrap_model(obj: Any) -> Any:
+        """Extract the estimator if the pickle was saved as a dict."""
+        if not isinstance(obj, dict):
+            return obj
+        for key in ('model', 'estimator', 'best_estimator', 'pipeline'):
+            if key in obj:
+                return obj[key]
+        raise ValueError(
+            f"Loaded pickle is a dict but no estimator key found. "
+            f"Keys present: {list(obj.keys())}"
+        )
+
     def load_classification_model(self, model_name: str) -> Any:
         """
         Load a classification model.
@@ -50,7 +63,7 @@ class ModelLoader:
             )
 
         with open(model_path, 'rb') as f:
-            model = pickle.load(f)
+            model = self._unwrap_model(pickle.load(f))
 
         self._models_cache[cache_key] = model
         return model
@@ -79,7 +92,7 @@ class ModelLoader:
             )
 
         with open(model_path, 'rb') as f:
-            model = pickle.load(f)
+            model = self._unwrap_model(pickle.load(f))
 
         self._models_cache[cache_key] = model
         return model
