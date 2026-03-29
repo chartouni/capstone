@@ -27,10 +27,6 @@ def extract_venue_features(
     """
     features = pd.DataFrame(index=venues.index)
 
-    if not training_mode and venue_stats is None:
-        # This should be called during training with the full dataset
-        raise ValueError("venue_stats required when training_mode is False")
-
     if training_mode:
         # Compute venue statistics from the training data
         # This would typically be done in the training pipeline
